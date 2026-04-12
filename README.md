@@ -1,1 +1,424 @@
 # dotstrap
+Automação de configuração inicial de ambientes Linux em quatro etapas independentes, cada uma com responsabilidade única.
+
+---
+
+## Fluxo
+```
+1. bootstrap/system.sh    →   update do sistema e instalação de pacotes essenciais
+2. bootstrap/ssh.sh       →   gera chave SSH e configura acesso ao GitHub
+3. bootstrap/desktop.sh   →   instala Hyprland e dependências do ambiente gráfico
+4. bootstrap/dotfiles.sh  →   clone dos dotfiles privados e execução do linkr
+
+Opcional:
+   bootstrap/dotfiles.sh vscodium  →   instala extensões e aplica dotfiles do VSCodium
+   bootstrap/headless.sh           →   configura o sistema para uso headless/servidor (k3d/Kubernetes)
+   tools/luks_keyfile.sh           →   unlock automático do LUKS2 via keyfile no initramfs
+   tools/cleanup_desktop.sh        →   remove ambientes desktop desnecessários (i3, XFCE, LightDM)
+```
+
+---
+
+## Etapa 1 - Preparar o sistema
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/system.sh | bash
+```
+O script:
+- Atualiza o sistema via `dnf update`
+- Instala os pacotes essenciais
+
+| Pacote | Uso |
+|--------|-----|
+| `vim` | Editor de texto |
+| `neovim` | Editor de texto extensível via Lua |
+| `tmux` | Multiplexador de terminal |
+| `curl` | Transferência de dados via URL |
+| `git` | Controle de versão |
+| `awk` | Processamento de texto |
+| `iproute` | Ferramentas de rede (`ip`, `ss`) |
+| `ncurses` | Suporte a interfaces de terminal |
+| `openssh` | Cliente SSH |
+| `openssh-server` | Servidor SSH |
+
+---
+
+## Etapa 2 - Configurar SSH para o GitHub
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/ssh.sh | bash
+```
+O script:
+- Cria `~/.ssh/` com as permissões corretas
+- Gera uma chave `ed25519` em `~/.ssh/github-dotfiles` (se não existir)
+- Adiciona um bloco de configuração em `~/.ssh/config` para `github.com`
+- Exibe a chave pública no terminal
+
+**Após executar**, adicione a chave pública exibida no GitHub:
+> **Settings → SSH and GPG Keys → New SSH Key**
+
+Em seguida, valide a conexão:
+```bash
+ssh -T github.com
+```
+
+---
+
+## Etapa 3 - Instalar o ambiente desktop (opcional)
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/desktop.sh | bash
+```
+O script:
+- Habilita o COPR `solopasha/hyprland`
+- Instala o Hyprland e todas as dependências do ambiente gráfico
+- Instala a JetBrainsMono Nerd Font em `~/.local/share/fonts`
+- Configura o **auto-start do Hyprland** via `~/.bash_profile` na tty1 (idempotente)
+
+| Pacote | Uso |
+|--------|-----|
+| `hyprland` | Compositor Wayland |
+| `hyprlock` | Tela de bloqueio |
+| `hyprshot` | Capturas de tela |
+| `waybar` | Barra de status |
+| `kitty` | Emulador de terminal |
+| `wofi` | Launcher de aplicações |
+| `wlogout` | Menu de energia |
+| `swaync` | Daemon de notificações |
+| `unzip` | Extração de arquivos zip |
+
+> A JetBrainsMono Nerd Font é instalada via download direto do repositório oficial do [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts) (v3.2.1).
+
+---
+
+## Etapa 4 - Aplicar dotfiles
+
+### 4.1 - Core
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash
+```
+O script:
+- Valida que o `git` está disponível
+- Clona o repositório privado de dotfiles em `~/.dotfiles` (ou faz `pull` se já existir)
+- Executa `linkr core`, aplicando os dotfiles essenciais: `vim`, `git`, `nvim`
+
+> Os dotfiles estão em um repositório privado separado (`jbrunojardim/dotfile`), acessível via SSH configurado na etapa 2. As configurações globais do git (`user.name`, `user.email`, `core.editor`) são aplicadas automaticamente pelo `linkr`, mantendo esses dados fora do repositório público.
+
+### 4.2 - Desktop Hyprland (opcional)
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash -s desk_hypr
+```
+Além do `core`, executa `linkr desk_hypr` se o Hyprland estiver instalado, aplicando os dotfiles de `hypr`, `waybar` e `kitty`.
+
+> Requer a etapa 3 executada previamente. Se o Hyprland não for detectado, o script exibe um aviso e encerra sem aplicar os dotfiles de desktop.
+
+### 4.3 - VSCodium (opcional)
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash -s vscodium
+```
+Se o VSCodium estiver instalado, o script:
+- Instala as extensões via `scripts/vscodium.sh`
+- Aplica os dotfiles via `linkr vscodium`, criando o symlink de `settings.json` e `tasks.json`
+
+| Extensão | Uso |
+|----------|-----|
+| `vscodevim.vim` | Emulação de Vim no editor |
+| `catppuccin.catppuccin-vsc` | Tema de cores |
+| `alexdauenhauer.catppuccin-noctis-icons` | Tema de ícones |
+| `catppuccin.catppuccin-vsc-icons` | Ícones alternativos Catppuccin |
+| `anthropic.claude-code` | Claude Code integrado ao editor |
+
+> Se o VSCodium não for detectado, o script exibe um aviso e encerra sem aplicar nada.
+
+---
+
+## Opcional - Configurar o sistema para uso headless/servidor
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/headless.sh | bash
+```
+
+Execute este script em máquinas que serão usadas como servidores headless — especialmente para rodar **k3d/Kubernetes** em laboratório.
+
+> **Recomendado:** reiniciar o sistema após a execução para garantir que todas as configurações entrem em vigor (especialmente GRUB e logind).
+
+O script aplica:
+
+| Configuração | Detalhe |
+|---|---|
+| Tampa fechada ignorada | `HandleLidSwitch=ignore` via `/etc/systemd/logind.conf.d/lid.conf` |
+| Swap desabilitado | `swapoff -a` + remoção da entrada no `/etc/fstab` — requisito do k3s |
+| Cockpit desabilitado | `systemctl disable --now cockpit.socket` |
+| firewalld desabilitado | controle de rede delegado ao Kubernetes (Network Policies, kube-proxy) |
+| GRUB timeout zerado | `GRUB_TIMEOUT=0` em `/etc/default/grub` + `grub2-mkconfig` |
+| Plymouth removido | `dnf remove plymouth` — bootloader gráfico desnecessário em servidor |
+| SELinux → `permissive` | compatibilidade com k3d/k3s sem desabilitar completamente |
+
+> **SELinux `permissive` vs `disabled`:** o modo `permissive` é suficiente para o k3d/k3s rodar sem bloqueios e mantém a opção de voltar para `enforcing` no futuro sem relabel do filesystem. Ir para `disabled` exigiria reboot + relabel completo para reverter.
+
+> **firewalld desabilitado:** em laboratório headless em rede local, o controle de rede fica a cargo do próprio Kubernetes. Para reativar: `systemctl enable --now firewalld`.
+
+---
+
+## Opcional - Unlock automático do LUKS2 via keyfile
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/luks_keyfile.sh | sudo bash
+```
+
+Execute este script em máquinas com disco criptografado (LUKS2) para eliminar a necessidade de digitar a senha a cada boot.
+
+O script:
+- Detecta a partição LUKS automaticamente via `lsblk`
+- Obtém o UUID da partição para nomear o keyfile
+- Solicita a senha LUKS interativamente — nunca em argumento ou arquivo
+- Valida a senha antes de prosseguir
+- Gera um keyfile aleatório (512 bytes) em `/etc/cryptsetup-keys.d/luks-UUID.key` com permissão `0400`
+- Configura o dracut para incluir o keyfile no initramfs
+- Adiciona o keyfile ao slot LUKS via `cryptsetup luksAddKey`
+- Regenera o initramfs com `dracut -fv`
+
+> **Idempotente:** se o keyfile já existir, o script encerra sem fazer alterações.
+
+> **IMPORTANTE:** a senha LUKS original continua válida como recovery. Guarde-a em local seguro — sem ela não há como recuperar o acesso caso o initramfs seja corrompido ou o keyfile removido.
+
+---
+
+## Opcional - Limpar ambientes desktop desnecessários
+
+```bash
+bash <(curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/cleanup_desktop.sh)
+```
+
+Execute este script em máquinas que vieram com i3, XFCE ou LightDM pré-instalados (ex: Fedora i3 spin).
+
+> **Atenção:** execute apenas após a etapa 3 concluída e com o Hyprland funcional.
+
+O script remove:
+
+| O que remove | Pacotes |
+|---|---|
+| i3 | `i3`, `i3status`, `i3lock`, `i3-config-fedora`, `python3-i3ipc`, `fedora-release-i3` |
+| LightDM | `lightdm`, `lightdm-gtk`, `lightdm-gobject`, `lightdm-gtk-greeter-settings` |
+| XFCE | `xfce4-terminal`, `xfce4-panel`, `xfce-polkit`, `libxfce4ui`, `libxfce4util`, `libxfce4windowing` |
+| Drivers Xorg | AMD, NVIDIA, VMware, QXL |
+| GNOME parcial | `gnome-abrt`, `gnome-themes-extra` |
+| Órfãos | via `dnf autoremove` |
+
+O script **mantém**:
+- `xorg-x11-server-Xwayland` — necessário para apps XWayland
+- `xorg-x11-drv-intel` — fallback para GPU Intel
+- `xorg-x11-drv-evdev`, `xorg-x11-drv-wacom` — input devices
+- `gnome-keyring` — gerenciamento de credenciais
+- `gnome-disk-utility` — gerenciamento de discos
+
+Também configura o systemd para iniciar sem display manager:
+```bash
+systemctl set-default multi-user.target
+```
+O Hyprland continua subindo automaticamente via `~/.bash_profile` na tty1.
+
+---
+
+## Opcional - Configurar banner de login no TTY
+
+Após aplicar os dotfiles (etapa 4), execute:
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash -s issue
+```
+
+Configura o `/etc/issue` com um banner ASCII art exibido na tela de login do TTY, com cores Catppuccin Mocha.
+
+> O banner aparece **apenas na tela de login do TTY** — não interfere com terminais abertos após o login.
+
+O comando aplica:
+- ASCII art **GARDEN** em mauve (`#cba6f7`)
+- Linha com distro, hardware e compositor em blue (`#89b4fa`)
+- Separadores em overlay (`#45475a`)
+
+---
+
+## linkr
+
+O `linkr` é o script de aplicação de dotfiles do repositório privado. Ele percorre automaticamente cada app na estrutura do repo e cria symlinks espelhando os caminhos relativos em `$HOME`, sem precisar listar arquivos manualmente.
+
+**Uso:**
+```bash
+./linkr                   # exibe ajuda e apps disponíveis
+./linkr core              # aplica dotfiles essenciais: vim, git, nvim
+./linkr desk_hypr         # aplica dotfiles do ambiente Hyprland: hypr, waybar, kitty
+./linkr vscodium          # aplica dotfiles do VSCodium: settings.json, tasks.json
+./linkr core desk_hypr    # aplica ambos os grupos
+./linkr all               # aplica todos os apps disponíveis
+./linkr waybar            # aplica um app individual
+./linkr issue             # configura o banner de login no TTY (/etc/issue)
+```
+
+**Filosofia:** cada app ocupa uma pasta no repo que espelha a estrutura do `$HOME`. O `linkr` percorre os arquivos com `find` recursivo e cria o symlink correspondente para cada um.
+
+```
+dotfile/waybar/.config/waybar/config.jsonc  →  ~/.config/waybar/config.jsonc
+dotfile/hypr/.config/hypr/hyprland.conf     →  ~/.config/hypr/hyprland.conf
+dotfile/vim/.vim/vimrc                      →  ~/.vim/vimrc
+```
+
+Se um symlink já existir e apontar para o caminho correto, ele é ignorado. Se existir um arquivo ou link diferente no destino, ele é removido antes de criar o novo.
+
+**Grupos disponíveis:**
+
+| Grupo | Apps |
+|-------|------|
+| `core` | `vim`, `git`, `nvim` |
+| `desk_hypr` | `hypr`, `waybar`, `kitty` |
+| `vscodium` | `.config/VSCodium/User/settings.json`, `.config/VSCodium/User/tasks.json` |
+
+> O comando `issue` é desacoplado de todos os grupos — inclusive do `all` — e deve ser executado explicitamente. Ele escreve em `/etc/issue` e requer `sudo`.
+
+---
+
+## VSCodium
+
+As configurações do VSCodium ficam no repositório privado em `vscodium/.config/VSCodium/User/` e são aplicadas via `linkr vscodium`.
+
+**Keybindings vim (`<leader> = Space`):**
+
+| Atalho | Ação |
+|--------|------|
+| `<leader>w` | Salvar arquivo |
+| `<leader>e` | Toggle sidebar |
+| `<leader>p` | Quick open (busca de arquivos) |
+| `<leader>n` | Próxima aba |
+| `<leader>[` | Aba anterior |
+| `<leader>t` | Toggle terminal integrado |
+| `<leader>a` | Toggle painel auxiliar (Secondary Sidebar) |
+| `<leader>c` | Focar painel auxiliar |
+| `<leader>gs` | Sync git — auto commit e push via `sync_git.sh` |
+| `<leader>/` | Limpar highlight de busca |
+| `;` | Abre o command mode (`:`) |
+| `q` | Fechar aba (`:q`) |
+| `<C-h/j/k/l>` | Navegar entre painéis |
+
+**Task: sync git**
+
+A task `sync git` é disparada pelo `<leader>gs` e executa `~/.dotfiles/scripts/sync_git.sh`, que itera pelos repositórios pessoais (`.dotfiles`, `dotfiles`, `dotstrap`), faz pull com rebase e push com mensagem automática de timestamp.
+
+---
+
+## Neovim
+A configuração do Neovim é minimal e focada em produtividade desde o primeiro uso:
+
+| Plugin | Função |
+|--------|--------|
+| [lazy.nvim](https://github.com/folke/lazy.nvim) | Gerenciador de plugins — bootstrap automático |
+| [tokyonight](https://github.com/folke/tokyonight.nvim) | Tema de cores (inativo) |
+| [catppuccin](https://github.com/catppuccin/nvim) | Tema de cores — variante `mocha` (ativo) |
+| [nvim-web-devicons](https://github.com/nvim-tree/nvim-web-devicons) | Ícones para plugins |
+| [nvim-tree](https://github.com/nvim-tree/nvim-tree.lua) | File explorer em painel lateral |
+| [telescope](https://github.com/nvim-telescope/telescope.nvim) | Fuzzy finder para arquivos, buffers e grep |
+| [treesitter](https://github.com/nvim-treesitter/nvim-treesitter) | Syntax highlighting e parsing avançado |
+| [gitsigns](https://github.com/lewis6991/gitsigns.nvim) | Indicadores de diff do git no gutter |
+| [toggleterm](https://github.com/akinsho/toggleterm.nvim) | Terminal integrado com suporte a múltiplas instâncias |
+| [lualine](https://github.com/nvim-lualine/lualine.nvim) | Barra de status |
+| [plenary](https://github.com/nvim-lua/plenary.nvim) | Utilitários Lua (dependência do telescope) |
+
+| Atalho | Ação |
+|--------|------|
+| `<leader>e` | Abre/fecha o painel do nvim-tree |
+| `<C-\>` | Abre/fecha terminal horizontal |
+| `<leader>tt` | Terminal horizontal |
+| `<leader>tf` | Terminal flutuante |
+| `<leader>t1-3` | Terminais numerados |
+| `<leader>fg` | Telescope: live grep |
+| `<leader>fb` | Telescope: buffers abertos |
+| `<leader>fh` | Telescope: help tags |
+
+Os plugins são instalados automaticamente na primeira abertura do `nvim`, sem nenhum passo extra.
+
+---
+
+## Estrutura do repositório
+```
+dotstrap/              # repositório público
+├── bootstrap/
+│   ├── system.sh               # Etapa 1: update do sistema e instalação de pacotes
+│   ├── ssh.sh                  # Etapa 2: gera chave SSH e configura acesso ao GitHub
+│   ├── desktop.sh              # Etapa 3: instala Hyprland e ambiente gráfico
+│   ├── dotfiles.sh             # Etapa 4: clone dos dotfiles e execução do linkr
+│   └── headless.sh             # Opcional: configura sistema para uso headless/servidor
+└── tools/
+    ├── luks_keyfile.sh         # Opcional: unlock automático do LUKS2 via keyfile no initramfs
+    ├── luks_tpm.sh             # Referência: unlock via TPM2
+    └── cleanup_desktop.sh      # Opcional: remove i3, XFCE, LightDM e configura multi-user.target
+
+dotfile/                        # repositório privado
+├── linkr                       # gerenciador de dotfiles (core, desk_hypr, vscodium, all, issue)
+├── scripts/
+│   ├── setup_issue.sh          # banner ASCII art Catppuccin Mocha no TTY login
+│   ├── vscodium.sh             # instalação de extensões do VSCodium
+│   └── sync_git.sh             # auto commit e push dos repositórios pessoais
+├── vscodium/
+│   └── .config/
+│       └── VSCodium/
+│           └── User/
+│               ├── settings.json   # configurações, tema e keybindings vim
+│               └── tasks.json      # task sync git (<leader>gs)
+├── git/
+│   └── .gitconfig
+├── vim/
+│   └── .vim/
+│       ├── vimrc
+│       ├── autocmds.vim
+│       ├── copilot.vim
+│       ├── git.vim
+│       ├── keymaps.vim
+│       ├── nerdtree.vim
+│       ├── netrw.vim
+│       ├── plugins.vim
+│       ├── statusbar.vim
+│       ├── templates.vim
+│       ├── terminal.vim
+│       └── theme.vim
+├── nvim/
+│   └── .config/
+│       └── nvim/
+│           ├── init.lua
+│           └── lua/
+│               ├── config/
+│               │   ├── keymaps.lua
+│               │   ├── lazy.lua
+│               │   └── options.lua
+│               └── plugins/
+│                   ├── catppuccin.lua
+│                   ├── devicons.lua
+│                   ├── gitsigns.lua
+│                   ├── lualine.lua
+│                   ├── nvim-tree.lua
+│                   ├── plenary.lua
+│                   ├── telescope.lua
+│                   ├── toggleterm.lua
+│                   ├── tokyonight.lua
+│                   └── treesitter.lua
+├── waybar/
+│   └── .config/
+│       └── waybar/
+│           ├── config.jsonc
+│           └── style.css
+├── hypr/
+│   └── .config/
+│       └── hypr/
+│           └── hyprland.conf
+└── kitty/
+    └── .config/
+        └── kitty/
+            └── kitty.conf
+```
+
+---
+
+## Requisitos
+- Sistema baseado em **RHEL/Fedora** (usa `dnf`)
+- Acesso `sudo`
+- `curl` e `bash` disponíveis no sistema base
+
+---
+
+## Licença
+MIT
