@@ -76,6 +76,7 @@ O script:
 |--------|-----|
 | `hyprland` | Compositor Wayland |
 | `hyprlock` | Tela de bloqueio |
+| `hypridle` | Daemon de bloqueio automático por inatividade |
 | `hyprshot` | Capturas de tela |
 | `waybar` | Barra de status |
 | `kitty` | Emulador de terminal |
@@ -404,7 +405,10 @@ dotfile/                        # repositório privado
 ├── hypr/
 │   └── .config/
 │       └── hypr/
-│           └── hyprland.conf
+│           ├── hyprland.conf
+│           ├── hyprlock.conf
+│           ├── hypridle.conf
+│           └── mocha.conf
 └── kitty/
     └── .config/
         └── kitty/

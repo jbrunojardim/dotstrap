@@ -10,6 +10,7 @@ log "Instalando Hyprland e dependências do ambiente desktop"
 sudo dnf install -y \
   hyprland \
   hyprlock \
+  hypridle \
   hyprshot \
   waybar \
   kitty \
