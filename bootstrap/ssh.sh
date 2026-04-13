@@ -3,47 +3,73 @@ set -euo pipefail
 
 log() { printf "\n==> %s\n" "$*"; }
 
-KEY_PATH="${HOME}/.ssh/github-dotfiles"
+KEY_GITHUB="${HOME}/.ssh/github-dotfiles"
+KEY_GITLAB="${HOME}/.ssh/gitlab"
 SSH_CONFIG="${HOME}/.ssh/config"
-HOST_ALIAS="github.com"
 
 log "Garantindo pasta ~/.ssh e permissões"
 mkdir -p "${HOME}/.ssh"
 chmod 700 "${HOME}/.ssh"
 
-log "Gerando chave SSH (se não existir)"
-if [[ -f "${KEY_PATH}" ]]; then
-  log "Chave já existe: ${KEY_PATH}"
+log "Gerando chave SSH para GitHub (se não existir)"
+if [[ -f "${KEY_GITHUB}" ]]; then
+  log "Chave já existe: ${KEY_GITHUB}"
 else
-  ssh-keygen -t ed25519 -f "${KEY_PATH}" -C "dotfiles" -N ""
-  chmod 600 "${KEY_PATH}"
-  chmod 644 "${KEY_PATH}.pub"
+  ssh-keygen -t ed25519 -f "${KEY_GITHUB}" -C "dotfiles" -N ""
+  chmod 600 "${KEY_GITHUB}"
+  chmod 644 "${KEY_GITHUB}.pub"
 fi
 
-log "Criando configuração SSH para ${HOST_ALIAS}"
+log "Gerando chave SSH para GitLab (se não existir)"
+if [[ -f "${KEY_GITLAB}" ]]; then
+  log "Chave já existe: ${KEY_GITLAB}"
+else
+  ssh-keygen -t ed25519 -f "${KEY_GITLAB}" -C "gitlab" -N ""
+  chmod 600 "${KEY_GITLAB}"
+  chmod 644 "${KEY_GITLAB}.pub"
+fi
 
 touch "${SSH_CONFIG}"
 chmod 600 "${SSH_CONFIG}"
 
-if ! grep -q "Host ${HOST_ALIAS}" "${SSH_CONFIG}"; then
+log "Criando configuração SSH para github.com"
+if ! grep -q "Host github.com" "${SSH_CONFIG}"; then
 cat >> "${SSH_CONFIG}" <<EOF
 
-Host ${HOST_ALIAS}
+Host github.com
   HostName github.com
   User git
-  IdentityFile ${KEY_PATH}
+  IdentityFile ${KEY_GITHUB}
   IdentitiesOnly yes
 EOF
-  log "Bloco SSH adicionado"
+  log "Bloco github.com adicionado"
 else
-  log "Bloco já existe — não alterado"
+  log "Bloco github.com já existe — não alterado"
 fi
 
-log "=== CHAVE PUBLICA ==="
-cat "${KEY_PATH}.pub"
+log "Criando configuração SSH para gitlab.com"
+if ! grep -q "Host gitlab.com" "${SSH_CONFIG}"; then
+cat >> "${SSH_CONFIG}" <<EOF
 
-log "Adicione essa chave no GitHub:"
-log "Settings → SSH Keys → New SSH Key"
+Host gitlab.com
+  HostName gitlab.com
+  User git
+  IdentityFile ${KEY_GITLAB}
+  IdentitiesOnly yes
+EOF
+  log "Bloco gitlab.com adicionado"
+else
+  log "Bloco gitlab.com já existe — não alterado"
+fi
+
+log "=== CHAVE PUBLICA — GitHub ==="
+cat "${KEY_GITHUB}.pub"
+log "Adicione no GitHub: Settings → SSH Keys → New SSH Key"
+
+log "=== CHAVE PUBLICA — GitLab ==="
+cat "${KEY_GITLAB}.pub"
+log "Adicione no GitLab: Preferences → SSH Keys → Add new key"
 
 log "Depois teste:"
-echo "ssh -T ${HOST_ALIAS}"
+echo "ssh -T github.com"
+echo "ssh -T gitlab.com"

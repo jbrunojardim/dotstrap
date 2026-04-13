@@ -6,7 +6,7 @@ Automação de configuração inicial de ambientes Linux em quatro etapas indepe
 ## Fluxo
 ```
 1. bootstrap/system.sh    →   update do sistema e instalação de pacotes essenciais
-2. bootstrap/ssh.sh       →   gera chave SSH e configura acesso ao GitHub
+2. bootstrap/ssh.sh       →   gera chaves SSH e configura acesso ao GitHub e GitLab
 3. bootstrap/desktop.sh   →   instala Hyprland e dependências do ambiente gráfico
 4. bootstrap/dotfiles.sh  →   clone dos dotfiles privados e execução do linkr
 
@@ -42,22 +42,28 @@ O script:
 
 ---
 
-## Etapa 2 - Configurar SSH para o GitHub
+## Etapa 2 - Configurar SSH para GitHub e GitLab
 ```bash
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/ssh.sh | bash
 ```
 O script:
 - Cria `~/.ssh/` com as permissões corretas
-- Gera uma chave `ed25519` em `~/.ssh/github-dotfiles` (se não existir)
-- Adiciona um bloco de configuração em `~/.ssh/config` para `github.com`
-- Exibe a chave pública no terminal
+- Gera uma chave `ed25519` em `~/.ssh/github-dotfiles` para o GitHub (se não existir)
+- Gera uma chave `ed25519` em `~/.ssh/gitlab` para o GitLab (se não existir)
+- Adiciona blocos de configuração em `~/.ssh/config` para `github.com` e `gitlab.com`
+- Exibe as chaves públicas no terminal
 
-**Após executar**, adicione a chave pública exibida no GitHub:
-> **Settings → SSH and GPG Keys → New SSH Key**
+**Após executar**, adicione cada chave pública no serviço correspondente:
 
-Em seguida, valide a conexão:
+| Serviço | Caminho |
+|---------|---------|
+| GitHub | **Settings → SSH and GPG Keys → New SSH Key** |
+| GitLab | **Preferences → SSH Keys → Add new key** |
+
+Em seguida, valide as conexões:
 ```bash
 ssh -T github.com
+ssh -T gitlab.com
 ```
 
 ---
