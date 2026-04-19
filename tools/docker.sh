@@ -18,8 +18,12 @@ sudo dnf remove -y docker \
 # Dependência para gerenciar repositórios
 sudo dnf install -y dnf-plugins-core
 
-# Adicionar repositório oficial do Docker
-sudo dnf config-manager addrepo --from-repofile https://download.docker.com/linux/fedora/docker-ce.repo
+# Adicionar repositório oficial do Docker (idempotente)
+if [ ! -f /etc/yum.repos.d/docker-ce.repo ]; then
+  sudo dnf config-manager addrepo --from-repofile https://download.docker.com/linux/fedora/docker-ce.repo
+else
+  echo "Repositorio docker-ce.repo ja existe, pulando."
+fi
 
 # Instalar Docker CE
 sudo dnf install -y \
