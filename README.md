@@ -15,6 +15,7 @@ Opcional:
    bootstrap/headless.sh           →   configura o sistema para uso headless/servidor (k3d/Kubernetes)
    tools/luks_keyfile.sh           →   unlock automático do LUKS2 via keyfile no initramfs
    tools/cleanup_desktop.sh        →   remove ambientes desktop desnecessários (i3, XFCE, LightDM)
+   tools/docker.sh                 →   instala Docker CE (repositório oficial, sem sudo pós-instalação)
 ```
 
 ---
@@ -224,6 +225,25 @@ O Hyprland continua subindo automaticamente via `~/.bash_profile` na tty1.
 
 ---
 
+## Opcional - Instalar Docker CE
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/docker.sh | bash
+```
+
+Execute este script em máquinas que precisam do Docker — especialmente servidores de laboratório CI/CD.
+
+O script:
+- Remove pacotes conflitantes (versões antigas ou do sistema)
+- Adiciona o repositório oficial do Docker para Fedora
+- Instala `docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin` e `docker-compose-plugin`
+- Inicia e habilita o serviço via `systemctl`
+- Adiciona o usuário atual ao grupo `docker` para uso sem sudo
+
+> Após a execução, rode `newgrp docker` ou abra uma nova sessão para aplicar o grupo.
+
+---
+
 ## Opcional - Configurar banner de login no TTY
 
 Após aplicar os dotfiles (etapa 4), execute:
@@ -353,7 +373,8 @@ dotstrap/              # repositório público
 └── tools/
     ├── luks_keyfile.sh         # Opcional: unlock automático do LUKS2 via keyfile no initramfs
     ├── luks_tpm.sh             # Referência: unlock via TPM2
-    └── cleanup_desktop.sh      # Opcional: remove i3, XFCE, LightDM e configura multi-user.target
+    ├── cleanup_desktop.sh      # Opcional: remove i3, XFCE, LightDM e configura multi-user.target
+    └── docker.sh               # Opcional: instala Docker CE no Fedora 43
 
 dotfile/                        # repositório privado
 ├── linkr                       # gerenciador de dotfiles (core, desk_hypr, vscodium, all, issue)
