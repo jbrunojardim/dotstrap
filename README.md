@@ -16,6 +16,7 @@ Opcional:
    tools/luks_keyfile.sh           →   unlock automático do LUKS2 via keyfile no initramfs
    tools/cleanup_desktop.sh        →   remove ambientes desktop desnecessários (i3, XFCE, LightDM)
    tools/docker.sh                 →   instala Docker CE (repositório oficial, sem sudo pós-instalação)
+   tools/grub_resolution.sh        →   detecta o monitor externo e força a resolução no TTY/GRUB
 ```
 
 ---
@@ -225,6 +226,25 @@ O Hyprland continua subindo automaticamente via `~/.bash_profile` na tty1.
 
 ---
 
+## Opcional - Forçar resolução do TTY/GRUB pelo monitor conectado
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/grub_resolution.sh | sudo bash
+```
+
+Execute este script após trocar de monitor para ajustar a resolução da tela de login do TTY.
+
+O script:
+- Detecta automaticamente o monitor externo conectado (ignora o `eDP` interno)
+- Lê o EDID do monitor via `/sys/class/drm/` e extrai a resolução preferida (DTD 1)
+- Instala `edid-decode` via `dnf` se não estiver presente
+- Atualiza `/etc/default/grub` com `video=`, `GRUB_GFXMODE` e `GRUB_GFXPAYLOAD_LINUX=keep`
+- Regenera o GRUB via `grub2-mkconfig`
+
+> Requer reboot para aplicar. Execute uma vez por monitor — não precisa rodar a cada boot.
+
+---
+
 ## Opcional - Instalar Docker CE
 
 ```bash
@@ -374,7 +394,8 @@ dotstrap/              # repositório público
     ├── luks_keyfile.sh         # Opcional: unlock automático do LUKS2 via keyfile no initramfs
     ├── luks_tpm.sh             # Referência: unlock via TPM2
     ├── cleanup_desktop.sh      # Opcional: remove i3, XFCE, LightDM e configura multi-user.target
-    └── docker.sh               # Opcional: instala Docker CE no Fedora 43
+    ├── docker.sh               # Opcional: instala Docker CE no Fedora 43
+    └── grub_resolution.sh      # Opcional: detecta monitor externo e força resolução no TTY/GRUB
 
 dotfile/                        # repositório privado
 ├── linkr                       # gerenciador de dotfiles (core, desk_hypr, vscodium, all, issue)
