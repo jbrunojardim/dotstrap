@@ -8,7 +8,7 @@ fi
 
 # Find first connected external connector (non-eDP)
 CONNECTOR=""
-for status_file in /sys/class/drm/card*/*/status; do
+for status_file in /sys/class/drm/card?-*/status; do
     connector_path="${status_file%/status}"
     connector_name="${connector_path##*/card?-}"
     if [[ "$connector_name" == eDP* ]]; then
@@ -29,7 +29,7 @@ fi
 echo "Found connected monitor: $CONNECTOR_NAME"
 
 EDID_FILE="$CONNECTOR/edid"
-if [[ ! -s "$EDID_FILE" ]]; then
+if [[ ! -r "$EDID_FILE" ]] || [[ "$(wc -c < "$EDID_FILE")" -eq 0 ]]; then
     echo "EDID not readable at $EDID_FILE. Aborting."
     exit 1
 fi
