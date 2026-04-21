@@ -6,7 +6,7 @@ Automação de configuração inicial de ambientes Linux em quatro etapas indepe
 ## Fluxo
 ```
 1. bootstrap/system.sh    →   update do sistema e instalação de pacotes essenciais
-2. bootstrap/ssh.sh       →   gera chaves SSH e configura acesso ao GitHub e GitLab
+2. bootstrap/ssh_keys.sh  →   gera chaves SSH para o GitHub e GitLab
 3. bootstrap/desktop.sh   →   instala Hyprland e dependências do ambiente gráfico
 4. bootstrap/dotfiles.sh  →   clone dos dotfiles privados e execução do linkr
 
@@ -44,16 +44,17 @@ O script:
 
 ---
 
-## Etapa 2 - Configurar SSH para GitHub e GitLab
+## Etapa 2 - Gerar chaves SSH para GitHub e GitLab
 ```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/ssh.sh | bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/ssh_keys.sh | bash
 ```
 O script:
 - Cria `~/.ssh/` com as permissões corretas
 - Gera uma chave `ed25519` em `~/.ssh/github-dotfiles` para o GitHub (se não existir)
 - Gera uma chave `ed25519` em `~/.ssh/gitlab` para o GitLab (se não existir)
-- Adiciona blocos de configuração em `~/.ssh/config` para `github.com` e `gitlab.com`
 - Exibe as chaves públicas no terminal
+
+> A configuração do `~/.ssh/config` (blocos `Host github.com` e `Host gitlab.com`) é aplicada pelo `linkr core` na etapa 4, via repositório privado de dotfiles.
 
 **Após executar**, adicione cada chave pública no serviço correspondente:
 
@@ -106,7 +107,7 @@ curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbruno
 O script:
 - Valida que o `git` está disponível
 - Clona o repositório privado de dotfiles em `~/.dotfiles` (ou faz `pull` se já existir)
-- Executa `linkr core`, aplicando os dotfiles essenciais: `vim`, `git`, `nvim`
+- Executa `linkr core`, aplicando os dotfiles essenciais: `vim`, `git`, `nvim`, `ssh`
 
 > Os dotfiles estão em um repositório privado separado (`jbrunojardim/dotfile`), acessível via SSH configurado na etapa 2. As configurações globais do git (`user.name`, `user.email`, `core.editor`) são aplicadas automaticamente pelo `linkr`, mantendo esses dados fora do repositório público.
 
@@ -245,6 +246,23 @@ O script:
 
 ---
 
+## Opcional - Autorizar acesso SSH ao servidor
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/ssh_authorize.sh | bash
+```
+
+Execute este script em qualquer máquina que precise de acesso transparente ao `srvfed01`. A senha do servidor será solicitada uma única vez.
+
+O script:
+- Gera a chave `~/.ssh/srvfed01` (se não existir)
+- Copia a chave pública para o servidor via `ssh-copy-id`
+- Valida a conexão sem senha ao final
+
+> O `~/.ssh/config` com o bloco `srvfed01` já é aplicado pelo `linkr core` via dotfiles privados. Este script apenas gera e registra a chave no servidor.
+
+---
+
 ## Opcional - Instalar Docker CE
 
 ```bash
@@ -313,7 +331,7 @@ Se um symlink já existir e apontar para o caminho correto, ele é ignorado. Se 
 
 | Grupo | Apps |
 |-------|------|
-| `core` | `vim`, `git`, `nvim` |
+| `core` | `vim`, `git`, `nvim`, `ssh` |
 | `desk_hypr` | `hypr`, `waybar`, `kitty` |
 | `vscodium` | `.config/VSCodium/User/settings.json`, `.config/VSCodium/User/tasks.json` |
 
@@ -386,7 +404,7 @@ Os plugins são instalados automaticamente na primeira abertura do `nvim`, sem n
 dotstrap/              # repositório público
 ├── bootstrap/
 │   ├── system.sh               # Etapa 1: update do sistema e instalação de pacotes
-│   ├── ssh.sh                  # Etapa 2: gera chave SSH e configura acesso ao GitHub
+│   ├── ssh_keys.sh             # Etapa 2: gera chaves SSH para GitHub e GitLab
 │   ├── desktop.sh              # Etapa 3: instala Hyprland e ambiente gráfico
 │   ├── dotfiles.sh             # Etapa 4: clone dos dotfiles e execução do linkr
 │   └── headless.sh             # Opcional: configura sistema para uso headless/servidor
@@ -395,7 +413,8 @@ dotstrap/              # repositório público
     ├── luks_tpm.sh             # Referência: unlock via TPM2
     ├── cleanup_desktop.sh      # Opcional: remove i3, XFCE, LightDM e configura multi-user.target
     ├── docker.sh               # Opcional: instala Docker CE no Fedora 43
-    └── grub_resolution.sh      # Opcional: detecta monitor externo e força resolução no TTY/GRUB
+    ├── grub_resolution.sh      # Opcional: detecta monitor externo e força resolução no TTY/GRUB
+    └── ssh_authorize.sh        # Opcional: gera chave e autoriza acesso SSH ao srvfed01
 
 dotfile/                        # repositório privado
 ├── linkr                       # gerenciador de dotfiles (core, desk_hypr, vscodium, all, issue)
