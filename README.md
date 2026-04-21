@@ -140,24 +140,6 @@ Se o VSCodium estiver instalado, o script:
 
 > Se o VSCodium não for detectado, o script exibe um aviso e encerra sem aplicar nada.
 
-### 4.4 - VS Code (opcional)
-```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash -s vscode
-```
-Se o VS Code estiver instalado, o script:
-- Instala as extensões via `scripts/vscode.sh`
-- Aplica os dotfiles via `linkr vscode`, criando o symlink de `settings.json` e `tasks.json`
-
-| Extensão | Uso |
-|----------|-----|
-| `vscodevim.vim` | Emulação de Vim no editor |
-| `catppuccin.catppuccin-vsc` | Tema de cores |
-| `alexdauenhauer.catppuccin-noctis-icons` | Tema de ícones |
-| `catppuccin.catppuccin-vsc-icons` | Ícones alternativos Catppuccin |
-| `anthropic.claude-code` | Claude Code integrado ao editor |
-
-> Se o VS Code não for detectado, o script exibe um aviso e encerra sem aplicar nada.
-
 ---
 
 ## Opcional - Configurar o sistema para uso headless/servidor
@@ -267,13 +249,12 @@ O script:
 
 ---
 
-## Opcional - Instalar VS Code
+## Opcional - VS Code
 
+### 1. Instalar
 ```bash
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/vscode.sh | bash
 ```
-
-Execute este script para instalar o VS Code via repositório oficial da Microsoft.
 
 O script:
 - Verifica se o `code` já está instalado (idempotente)
@@ -281,7 +262,24 @@ O script:
 - Adiciona o repositório oficial em `/etc/yum.repos.d/vscode.repo`
 - Instala via `dnf install code`
 
-> Após instalar, execute `bootstrap/dotfiles.sh vscode` para aplicar as extensões e configurações.
+### 2. Aplicar dotfiles
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash -s vscode
+```
+
+O script:
+- Instala as extensões via `scripts/vscode.sh`
+- Aplica os dotfiles via `linkr vscode`, criando o symlink de `settings.json` e `tasks.json`
+
+| Extensão | Uso |
+|----------|-----|
+| `vscodevim.vim` | Emulação de Vim no editor |
+| `catppuccin.catppuccin-vsc` | Tema de cores |
+| `alexdauenhauer.catppuccin-noctis-icons` | Tema de ícones |
+| `catppuccin.catppuccin-vsc-icons` | Ícones alternativos Catppuccin |
+| `anthropic.claude-code` | Claude Code integrado ao editor |
+
+> Se o VS Code não for detectado, o script exibe um aviso e encerra sem aplicar nada.
 
 ---
 
