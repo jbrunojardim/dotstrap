@@ -12,6 +12,7 @@ Automação de configuração inicial de ambientes Linux em quatro etapas indepe
 
 Opcional:
    bootstrap/dotfiles.sh vscodium  →   instala extensões e aplica dotfiles do VSCodium
+   bootstrap/dotfiles.sh vscode    →   instala extensões e aplica dotfiles do VS Code
    bootstrap/headless.sh           →   configura o sistema para uso headless/servidor (k3d/Kubernetes)
    tools/luks_keyfile.sh           →   unlock automático do LUKS2 via keyfile no initramfs
    tools/cleanup_desktop.sh        →   remove ambientes desktop desnecessários (i3, XFCE, LightDM)
@@ -136,6 +137,24 @@ Se o VSCodium estiver instalado, o script:
 | `anthropic.claude-code` | Claude Code integrado ao editor |
 
 > Se o VSCodium não for detectado, o script exibe um aviso e encerra sem aplicar nada.
+
+### 4.4 - VS Code (opcional)
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash -s vscode
+```
+Se o VS Code estiver instalado, o script:
+- Instala as extensões via `scripts/vscode.sh`
+- Aplica os dotfiles via `linkr vscode`, criando o symlink de `settings.json` e `tasks.json`
+
+| Extensão | Uso |
+|----------|-----|
+| `vscodevim.vim` | Emulação de Vim no editor |
+| `catppuccin.catppuccin-vsc` | Tema de cores |
+| `alexdauenhauer.catppuccin-noctis-icons` | Tema de ícones |
+| `catppuccin.catppuccin-vsc-icons` | Ícones alternativos Catppuccin |
+| `anthropic.claude-code` | Claude Code integrado ao editor |
+
+> Se o VS Code não for detectado, o script exibe um aviso e encerra sem aplicar nada.
 
 ---
 
@@ -349,6 +368,7 @@ Se um symlink já existir e apontar para o caminho correto, ele é ignorado. Se 
 | `core` | `vim`, `git`, `nvim`, `ssh` |
 | `desk_hypr` | `hypr`, `waybar`, `kitty` |
 | `vscodium` | `.config/VSCodium/User/settings.json`, `.config/VSCodium/User/tasks.json` |
+| `vscode` | `.config/Code/User/settings.json`, `.config/Code/User/tasks.json` |
 
 > O comando `issue` é desacoplado de todos os grupos — inclusive do `all` — e deve ser executado explicitamente. Ele escreve em `/etc/issue` e requer `sudo`.
 
@@ -433,14 +453,21 @@ dotstrap/              # repositório público
     └── ssh_authorize.sh        # Opcional: gera chave e autoriza acesso SSH ao srvfed01
 
 dotfile/                        # repositório privado
-├── linkr                       # gerenciador de dotfiles (core, desk_hypr, vscodium, all, issue)
+├── linkr                       # gerenciador de dotfiles (core, desk_hypr, vscodium, vscode, all, issue)
 ├── scripts/
 │   ├── setup_issue.sh          # banner ASCII art Catppuccin Mocha no TTY login
 │   ├── vscodium.sh             # instalação de extensões do VSCodium
+│   ├── vscode.sh               # instalação de extensões do VS Code
 │   └── sync_git.sh             # auto commit e push dos repositórios pessoais
 ├── vscodium/
 │   └── .config/
 │       └── VSCodium/
+│           └── User/
+│               ├── settings.json   # configurações, tema e keybindings vim
+│               └── tasks.json      # task sync git (<leader>gs)
+├── vscode/
+│   └── .config/
+│       └── Code/
 │           └── User/
 │               ├── settings.json   # configurações, tema e keybindings vim
 │               └── tasks.json      # task sync git (<leader>gs)

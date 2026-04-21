@@ -23,7 +23,7 @@ else
   git clone "$DOTFILES_REPO" "$DOTFILES_DIR"
 fi
 
-if [[ "${1:-}" != "issue" ]] && [[ "${1:-}" != "vscodium" ]]; then
+if [[ "${1:-}" != "issue" ]] && [[ "${1:-}" != "vscodium" ]] && [[ "${1:-}" != "vscode" ]]; then
   log "Executando linkr core"
   bash "$DOTFILES_DIR/linkr" core
 fi
@@ -50,6 +50,17 @@ if [[ "${1:-}" == "vscodium" ]]; then
     bash "$DOTFILES_DIR/linkr" vscodium
   else
     printf "\n[AVISO] vscodium solicitado mas VSCodium não encontrado.\n" >&2
+  fi
+fi
+
+if [[ "${1:-}" == "vscode" ]]; then
+  if command -v code &>/dev/null; then
+    log "VS Code detectado — instalando extensões"
+    bash "$DOTFILES_DIR/scripts/vscode.sh"
+    log "Aplicando dotfiles vscode"
+    bash "$DOTFILES_DIR/linkr" vscode
+  else
+    printf "\n[AVISO] vscode solicitado mas VS Code não encontrado.\n" >&2
   fi
 fi
 
