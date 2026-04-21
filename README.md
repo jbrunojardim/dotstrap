@@ -246,6 +246,21 @@ O script:
 
 ---
 
+## Opcional - Instalar kubectl
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/kubectl.sh | bash
+```
+
+Execute este script em máquinas que precisam interagir com clusters Kubernetes.
+
+O script:
+- Verifica se o `kubectl` já está instalado (idempotente)
+- Baixa a versão stable oficial via `dl.k8s.io`
+- Instala em `/usr/local/bin/kubectl`
+
+---
+
 ## Opcional - Autorizar acesso SSH ao servidor
 
 ```bash
@@ -414,6 +429,7 @@ dotstrap/              # repositório público
     ├── cleanup_desktop.sh      # Opcional: remove i3, XFCE, LightDM e configura multi-user.target
     ├── docker.sh               # Opcional: instala Docker CE no Fedora 43
     ├── grub_resolution.sh      # Opcional: detecta monitor externo e força resolução no TTY/GRUB
+    ├── kubectl.sh              # Opcional: instala kubectl (versão stable oficial)
     └── ssh_authorize.sh        # Opcional: gera chave e autoriza acesso SSH ao srvfed01
 
 dotfile/                        # repositório privado
