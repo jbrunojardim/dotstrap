@@ -16,6 +16,8 @@ Opcional:
    bootstrap/headless.sh           →   configura o sistema para uso headless/servidor (k3d/Kubernetes)
    tools/luks_keyfile.sh           →   unlock automático do LUKS2 via keyfile no initramfs
    tools/cleanup_desktop.sh        →   remove ambientes desktop desnecessários (i3, XFCE, LightDM)
+   tools/kubectl.sh                →   instala kubectl (versão stable oficial)
+   tools/vscode.sh                 →   instala VS Code no Fedora
    tools/docker.sh                 →   instala Docker CE (repositório oficial, sem sudo pós-instalação)
    tools/grub_resolution.sh        →   detecta o monitor externo e força a resolução no TTY/GRUB
 ```
@@ -265,6 +267,24 @@ O script:
 
 ---
 
+## Opcional - Instalar VS Code
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/vscode.sh | bash
+```
+
+Execute este script para instalar o VS Code via repositório oficial da Microsoft.
+
+O script:
+- Verifica se o `code` já está instalado (idempotente)
+- Importa a chave GPG da Microsoft
+- Adiciona o repositório oficial em `/etc/yum.repos.d/vscode.repo`
+- Instala via `dnf install code`
+
+> Após instalar, execute `bootstrap/dotfiles.sh vscode` para aplicar as extensões e configurações.
+
+---
+
 ## Opcional - Instalar kubectl
 
 ```bash
@@ -450,6 +470,7 @@ dotstrap/              # repositório público
     ├── docker.sh               # Opcional: instala Docker CE no Fedora 43
     ├── grub_resolution.sh      # Opcional: detecta monitor externo e força resolução no TTY/GRUB
     ├── kubectl.sh              # Opcional: instala kubectl (versão stable oficial)
+    ├── vscode.sh               # Opcional: instala VS Code no Fedora (repositório oficial Microsoft)
     └── ssh_authorize.sh        # Opcional: gera chave e autoriza acesso SSH ao srvfed01
 
 dotfile/                        # repositório privado
