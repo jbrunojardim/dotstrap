@@ -14,6 +14,18 @@ HandleLidSwitchDocked=ignore
 EOF
 log "Tampa: HandleLidSwitch=ignore aplicado"
 
+# ─── SSH Keepalive ────────────────────────────────────────────────────────────
+log "Configurando SSH keepalive (evita travamento de conexões ociosas)"
+SSHD_CONFIG="/etc/ssh/sshd_config"
+if [[ -f "$SSHD_CONFIG" ]]; then
+  sudo sed -i 's/#\?ClientAliveInterval.*/ClientAliveInterval 60/' "$SSHD_CONFIG"
+  sudo sed -i 's/#\?ClientAliveCountMax.*/ClientAliveCountMax 3/' "$SSHD_CONFIG"
+  sudo systemctl restart sshd
+  log "SSH keepalive aplicado: ClientAliveInterval=60, ClientAliveCountMax=3"
+else
+  log "$SSHD_CONFIG não encontrado — pulando"
+fi
+
 # ─── Swap ─────────────────────────────────────────────────────────────────────
 log "Desabilitando swap (requisito do k3s/Kubernetes)"
 sudo swapoff -a
@@ -115,7 +127,8 @@ echo "      - Cockpit:        desabilitado"
 echo "      - firewalld:      desabilitado (controle de rede via Kubernetes)"
 echo "      - GRUB timeout:   0s"
 echo "      - Plymouth:       removido"
-echo "      - SELinux:        permissive"
+echo "      - SELinux:        permissive
+      - SSH keepalive:  ClientAliveInterval=60 / ClientAliveCountMax=3"
 echo ""
 echo "    Recomendado: reiniciar o sistema para garantir que todas as"
 echo "    configurações entrem em vigor (especialmente GRUB e tampa)."

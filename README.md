@@ -158,6 +158,7 @@ O script aplica:
 | Configuração | Detalhe |
 |---|---|
 | Tampa fechada ignorada | `HandleLidSwitch=ignore` via `/etc/systemd/logind.conf.d/lid.conf` |
+| SSH keepalive | `ClientAliveInterval=60` / `ClientAliveCountMax=3` — evita travamento de conexões SSH ociosas |
 | Swap desabilitado | `swapoff -a` + remoção da entrada no `/etc/fstab` — requisito do k3s |
 | Cockpit desabilitado | `systemctl disable --now cockpit.socket` |
 | firewalld desabilitado | controle de rede delegado ao Kubernetes (Network Policies, kube-proxy) |
