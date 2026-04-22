@@ -18,6 +18,7 @@ Opcional:
    tools/cleanup_desktop.sh        →   remove ambientes desktop desnecessários (i3, XFCE, LightDM)
    tools/kubectl.sh                →   instala kubectl (versão stable oficial)
    tools/vscode.sh                 →   instala VS Code no Fedora
+   tools/sudo_nopasswd.sh          →   configura sudo sem senha para o usuário atual
    tools/docker.sh                 →   instala Docker CE (repositório oficial, sem sudo pós-instalação)
    tools/grub_resolution.sh        →   detecta o monitor externo e força a resolução no TTY/GRUB
 ```
@@ -315,6 +316,23 @@ O script itera sobre a lista de servidores (`srvfed01`, `srvlnx002`) e para cada
 
 ---
 
+## Opcional - Sudo sem senha para o usuário atual
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/sudo_nopasswd.sh | sudo bash
+```
+
+Execute este script para configurar acesso `sudo` sem senha para o usuário atual.
+
+O script:
+- Detecta o usuário real via `$SUDO_USER`
+- Cria `/etc/sudoers.d/<usuario>_nopasswd` com a regra `NOPASSWD:ALL` e permissão `0440`
+- Valida o arquivo com `visudo -cf` antes de manter — reverte automaticamente se inválido
+
+> **Atenção:** concede privilégio amplo ao usuário. Execute apenas em ambientes controlados.
+
+---
+
 ## Opcional - Instalar Docker CE
 
 ```bash
@@ -469,7 +487,8 @@ dotstrap/              # repositório público
     ├── grub_resolution.sh      # Opcional: detecta monitor externo e força resolução no TTY/GRUB
     ├── kubectl.sh              # Opcional: instala kubectl (versão stable oficial)
     ├── vscode.sh               # Opcional: instala VS Code no Fedora (repositório oficial Microsoft)
-    └── ssh_authorize.sh        # Opcional: gera chave e autoriza acesso SSH aos servidores do homelab
+    ├── ssh_authorize.sh        # Opcional: gera chave e autoriza acesso SSH aos servidores do homelab
+    └── sudo_nopasswd.sh        # Opcional: configura sudo sem senha para o usuário atual
 
 dotfile/                        # repositório privado
 ├── linkr                       # gerenciador de dotfiles (core, desk_hypr, vscodium, vscode, all, issue)
