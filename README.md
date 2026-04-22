@@ -164,9 +164,9 @@ O script aplica:
 | firewalld desabilitado | controle de rede delegado ao Kubernetes (Network Policies, kube-proxy) |
 | GRUB timeout zerado | `GRUB_TIMEOUT=0` em `/etc/default/grub` + `grub2-mkconfig` |
 | Plymouth removido | `dnf remove plymouth` — bootloader gráfico desnecessário em servidor |
-| SELinux → `permissive` | compatibilidade com k3d/k3s sem desabilitar completamente |
+| SELinux → `disabled` | compatibilidade com k3d/k3s — requer reboot para efeito completo |
 
-> **SELinux `permissive` vs `disabled`:** o modo `permissive` é suficiente para o k3d/k3s rodar sem bloqueios e mantém a opção de voltar para `enforcing` no futuro sem relabel do filesystem. Ir para `disabled` exigiria reboot + relabel completo para reverter.
+> **SELinux `disabled`:** requer reboot para entrar em vigor completamente. Para reverter para `enforcing` no futuro, será necessário reboot + relabel do filesystem.
 
 > **firewalld desabilitado:** em laboratório headless em rede local, o controle de rede fica a cargo do próprio Kubernetes. Para reativar: `systemctl enable --now firewalld`.
 

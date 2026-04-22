@@ -105,13 +105,13 @@ else
   log "Plymouth não instalado — pulando"
 fi
 
-# ─── SELinux → permissive ─────────────────────────────────────────────────────
-log "Configurando SELinux para modo permissive (compatibilidade com k3d/Kubernetes)"
+# ─── SELinux → disabled ───────────────────────────────────────────────────────
+log "Configurando SELinux para modo disabled (compatibilidade com k3d/Kubernetes)"
 SELINUX_CONFIG="/etc/selinux/config"
 if [[ -f "$SELINUX_CONFIG" ]]; then
-  sudo sed -i 's/^SELINUX=.*/SELINUX=permissive/' "$SELINUX_CONFIG"
-  sudo setenforce 0 2>/dev/null || log "setenforce 0: SELinux já em permissive ou disabled"
-  log "SELinux → permissive (ativo imediatamente, persistido no próximo boot)"
+  sudo sed -i 's/^SELINUX=.*/SELINUX=disabled/' "$SELINUX_CONFIG"
+  sudo setenforce 0 2>/dev/null || true
+  log "SELinux → disabled (persistido no próximo boot — requer reboot para efeito completo)"
 else
   log "/etc/selinux/config não encontrado — pulando"
 fi
@@ -127,7 +127,7 @@ echo "      - Cockpit:        desabilitado"
 echo "      - firewalld:      desabilitado (controle de rede via Kubernetes)"
 echo "      - GRUB timeout:   0s"
 echo "      - Plymouth:       removido"
-echo "      - SELinux:        permissive
+echo "      - SELinux:        disabled
       - SSH keepalive:  ClientAliveInterval=60 / ClientAliveCountMax=3"
 echo ""
 echo "    Recomendado: reiniciar o sistema para garantir que todas as"
