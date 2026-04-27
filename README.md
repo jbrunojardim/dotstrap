@@ -55,22 +55,25 @@ curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbruno
 O script:
 - Cria `~/.ssh/` com as permissões corretas
 - Gera uma chave `ed25519` em `~/.ssh/github-dotfiles` para o GitHub (se não existir)
-- Gera uma chave `ed25519` em `~/.ssh/gitlab` para o GitLab (se não existir)
+- Gera uma chave `ed25519` em `~/.ssh/gitlab-ms` para o GitLab (conta MS, se não existir)
+- Gera uma chave `ed25519` em `~/.ssh/gitlab-google` para o GitLab (conta Google, se não existir)
 - Exibe as chaves públicas no terminal
 
-> A configuração do `~/.ssh/config` (blocos `Host github.com` e `Host gitlab.com`) é aplicada pelo `linkr core` na etapa 4, via repositório privado de dotfiles.
+> A configuração do `~/.ssh/config` (blocos `Host gitlab-ms` e `Host gitlab-google`) é aplicada pelo `linkr core` na etapa 4, via repositório privado de dotfiles. Os remotes dos repositórios GitLab devem usar os aliases — ex: `git@gitlab-ms:org/repo.git`.
 
 **Após executar**, adicione cada chave pública no serviço correspondente:
 
 | Serviço | Caminho |
 |---------|---------|
 | GitHub | **Settings → SSH and GPG Keys → New SSH Key** |
-| GitLab | **Preferences → SSH Keys → Add new key** |
+| GitLab (conta MS) | **Preferences → SSH Keys → Add new key** |
+| GitLab (conta Google) | **Preferences → SSH Keys → Add new key** |
 
 Em seguida, valide as conexões:
 ```bash
-ssh -T github.com
-ssh -T gitlab.com
+ssh -T git@github.com
+ssh -T git@gitlab-ms
+ssh -T git@gitlab-google
 ```
 
 ---
