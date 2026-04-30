@@ -303,23 +303,6 @@ O script:
 
 ---
 
-## Opcional - Autorizar acesso SSH ao servidor
-
-```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/ssh_authorize.sh | bash
-```
-
-Execute este script em qualquer máquina que precise de acesso transparente aos servidores do homelab. A senha de cada servidor será solicitada uma única vez.
-
-O script itera sobre a lista de servidores (`srvfed01`, `srvlnx002`) e para cada um:
-- Gera a chave `~/.ssh/<host>` (se não existir)
-- Copia a chave pública para o servidor via `ssh-copy-id`
-- Valida a conexão sem senha ao final
-
-> O `~/.ssh/config` com os blocos de cada servidor já é aplicado pelo `linkr core` via dotfiles privados. Este script apenas gera e registra as chaves nos servidores.
-
----
-
 ## Opcional - Sudo sem senha para o usuário atual
 
 ```bash
@@ -491,7 +474,6 @@ dotstrap/              # repositório público
     ├── grub_resolution.sh      # Opcional: detecta monitor externo e força resolução no TTY/GRUB
     ├── kubectl.sh              # Opcional: instala kubectl (versão stable oficial)
     ├── vscode.sh               # Opcional: instala VS Code no Fedora (repositório oficial Microsoft)
-    ├── ssh_authorize.sh        # Opcional: gera chave e autoriza acesso SSH aos servidores do homelab
     └── sudo_nopasswd.sh        # Opcional: configura sudo sem senha para o usuário atual
 
 dotfile/                        # repositório privado
