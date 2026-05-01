@@ -1,34 +1,42 @@
 # dotstrap
-Automação de configuração inicial de ambientes Linux em quatro etapas independentes, cada uma com responsabilidade única.
+
+Automação de configuração inicial de ambientes Linux em etapas independentes, cada uma com responsabilidade única.
 
 ---
 
-## Fluxo
-```
-1. bootstrap/system.sh    →   update do sistema e instalação de pacotes essenciais
-2. bootstrap/ssh_keys.sh  →   gera chaves SSH para o GitHub e GitLab
-3. bootstrap/desktop.sh   →   instala Hyprland e dependências do ambiente gráfico
-4. bootstrap/dotfiles.sh  →   clone dos dotfiles privados e execução do linkr
+## Índice
 
-Opcional:
-   bootstrap/dotfiles.sh vscodium  →   instala extensões e aplica dotfiles do VSCodium
-   bootstrap/dotfiles.sh vscode    →   instala extensões e aplica dotfiles do VS Code
-   bootstrap/headless.sh           →   configura o sistema para uso headless/servidor (k3d/Kubernetes)
-   tools/luks_keyfile.sh           →   unlock automático do LUKS2 via keyfile no initramfs
-   tools/cleanup_desktop.sh        →   remove ambientes desktop desnecessários (i3, XFCE, LightDM)
-   tools/kubectl.sh                →   instala kubectl (versão stable oficial)
-   tools/vscode.sh                 →   instala VS Code no Fedora
-   tools/sudo_nopasswd.sh          →   configura sudo sem senha para o usuário atual
-   tools/docker.sh                 →   instala Docker CE (repositório oficial, sem sudo pós-instalação)
-   tools/grub_resolution.sh        →   detecta o monitor externo e força a resolução no TTY/GRUB
-```
+- [Fluxo principal](#fluxo-principal)
+- [Etapa 1 — Preparar o sistema](#etapa-1--preparar-o-sistema)
+- [Etapa 2 — Gerar chaves SSH](#etapa-2--gerar-chaves-ssh)
+- [Etapa 3 — Instalar o ambiente desktop](#etapa-3--instalar-o-ambiente-desktop)
+- [Etapa 4 — Aplicar dotfiles](#etapa-4--aplicar-dotfiles)
+- [linkr](#linkr)
+- [Neovim](#neovim)
+- [VSCodium](#vscodium)
+- [Ferramentas opcionais](#ferramentas-opcionais)
+- [Estrutura do repositório](#estrutura-do-repositório)
+- [Requisitos](#requisitos)
 
 ---
 
-## Etapa 1 - Preparar o sistema
+## Fluxo principal
+
+| Etapa | Script | Responsabilidade |
+|-------|--------|-----------------|
+| 1 | `bootstrap/system.sh` | Update do sistema e instalação de pacotes essenciais |
+| 2 | `bootstrap/ssh_keys.sh` | Geração de chaves SSH para GitHub e GitLab |
+| 3 | `bootstrap/desktop.sh` | Instalação do Hyprland e dependências do ambiente gráfico |
+| 4 | `bootstrap/dotfiles.sh` | Clone dos dotfiles privados e execução do `linkr` |
+
+---
+
+## Etapa 1 — Preparar o sistema
+
 ```bash
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/system.sh | bash
 ```
+
 O script:
 - Atualiza o sistema via `dnf update`
 - Instala os pacotes essenciais
@@ -48,10 +56,12 @@ O script:
 
 ---
 
-## Etapa 2 - Gerar chaves SSH para GitHub e GitLab
+## Etapa 2 — Gerar chaves SSH
+
 ```bash
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/ssh_keys.sh | bash
 ```
+
 O script:
 - Cria `~/.ssh/` com as permissões corretas
 - Gera uma chave `ed25519` em `~/.ssh/github-dotfiles` para o GitHub (se não existir)
@@ -78,13 +88,14 @@ ssh -T git@gitlab-google
 
 ---
 
-## Etapa 3 - Instalar o ambiente desktop (opcional)
+## Etapa 3 — Instalar o ambiente desktop
 
 > Execute em máquinas com monitor — **não executar em servidores headless**. Para servidores, pule para a Etapa 4 ou use `bootstrap/headless.sh`.
 
 ```bash
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/desktop.sh | bash
 ```
+
 O script:
 - Habilita o COPR `solopasha/hyprland`
 - Instala o Hyprland e todas as dependências do ambiente gráfico
@@ -109,12 +120,14 @@ O script:
 
 ---
 
-## Etapa 4 - Aplicar dotfiles
+## Etapa 4 — Aplicar dotfiles
 
-### 4.1 - Core
+### 4.1 — Core
+
 ```bash
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash
 ```
+
 O script:
 - Valida que o `git` está disponível
 - Clona o repositório privado de dotfiles em `~/.dotfiles` (ou faz `pull` se já existir)
@@ -122,243 +135,39 @@ O script:
 
 > Os dotfiles estão em um repositório privado separado (`jbrunojardim/dotfile`), acessível via SSH configurado na etapa 2. As configurações globais do git (`user.name`, `user.email`, `core.editor`) são aplicadas automaticamente pelo `linkr`, mantendo esses dados fora do repositório público.
 
-### 4.2 - Desktop Hyprland (opcional)
+### 4.2 — Desktop Hyprland
+
 ```bash
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash -s desk_hypr
 ```
+
 Além do `core`, executa `linkr desk_hypr` se o Hyprland estiver instalado, aplicando os dotfiles de `hypr`, `waybar` e `kitty`.
 
 > Requer a etapa 3 executada previamente. Se o Hyprland não for detectado, o script exibe um aviso e encerra sem aplicar os dotfiles de desktop.
 
-### 4.3 - VSCodium (opcional)
+### 4.3 — VSCodium
+
 ```bash
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash -s vscodium
 ```
+
 Se o VSCodium estiver instalado, o script:
 - Instala as extensões via `scripts/vscodium.sh`
 - Aplica os dotfiles via `linkr vscodium`, criando o symlink de `settings.json` e `tasks.json`
 
-| Extensão | Uso |
-|----------|-----|
-| `vscodevim.vim` | Emulação de Vim no editor |
-| `catppuccin.catppuccin-vsc` | Tema de cores |
-| `alexdauenhauer.catppuccin-noctis-icons` | Tema de ícones |
-| `catppuccin.catppuccin-vsc-icons` | Ícones alternativos Catppuccin |
-| `anthropic.claude-code` | Claude Code integrado ao editor |
-
 > Se o VSCodium não for detectado, o script exibe um aviso e encerra sem aplicar nada.
 
----
+### 4.4 — VS Code
 
-## Opcional - Configurar o sistema para uso headless/servidor
-
-```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/headless.sh | bash
-```
-
-Execute este script em máquinas que serão usadas como servidores headless — especialmente para rodar **k3d/Kubernetes** em laboratório.
-
-> **Recomendado:** reiniciar o sistema após a execução para garantir que todas as configurações entrem em vigor (especialmente GRUB e logind).
-
-O script aplica:
-
-| Configuração | Detalhe |
-|---|---|
-| Tampa fechada ignorada | `HandleLidSwitch=ignore` via `/etc/systemd/logind.conf.d/lid.conf` |
-| SSH keepalive | `ClientAliveInterval=60` / `ClientAliveCountMax=3` — evita travamento de conexões SSH ociosas |
-| Swap desabilitado | `swapoff -a` + remoção da entrada no `/etc/fstab` — requisito do k3s |
-| Cockpit desabilitado | `systemctl disable --now cockpit.socket` |
-| firewalld desabilitado | controle de rede delegado ao Kubernetes (Network Policies, kube-proxy) |
-| GRUB timeout zerado | `GRUB_TIMEOUT=0` em `/etc/default/grub` + `grub2-mkconfig` |
-| Plymouth removido | `dnf remove plymouth` — bootloader gráfico desnecessário em servidor |
-| SELinux → `disabled` | compatibilidade com k3d/k3s — requer reboot para efeito completo |
-
-> **SELinux `disabled`:** requer reboot para entrar em vigor completamente. Para reverter para `enforcing` no futuro, será necessário reboot + relabel do filesystem.
-
-> **firewalld desabilitado:** em laboratório headless em rede local, o controle de rede fica a cargo do próprio Kubernetes. Para reativar: `systemctl enable --now firewalld`.
-
----
-
-## Opcional - Unlock automático do LUKS2 via keyfile
-
-```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/luks_keyfile.sh | sudo bash
-```
-
-Execute este script em máquinas com disco criptografado (LUKS2) para eliminar a necessidade de digitar a senha a cada boot.
-
-O script:
-- Detecta a partição LUKS automaticamente via `lsblk`
-- Obtém o UUID da partição para nomear o keyfile
-- Solicita a senha LUKS interativamente — nunca em argumento ou arquivo
-- Valida a senha antes de prosseguir
-- Gera um keyfile aleatório (512 bytes) em `/etc/cryptsetup-keys.d/luks-UUID.key` com permissão `0400`
-- Configura o dracut para incluir o keyfile no initramfs
-- Adiciona o keyfile ao slot LUKS via `cryptsetup luksAddKey`
-- Regenera o initramfs com `dracut -fv`
-
-> **Idempotente:** se o keyfile já existir, o script encerra sem fazer alterações.
-
-> **IMPORTANTE:** a senha LUKS original continua válida como recovery. Guarde-a em local seguro — sem ela não há como recuperar o acesso caso o initramfs seja corrompido ou o keyfile removido.
-
----
-
-## Opcional - Limpar ambientes desktop desnecessários
-
-```bash
-bash <(curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/cleanup_desktop.sh)
-```
-
-Execute este script em máquinas que vieram com i3, XFCE ou LightDM pré-instalados (ex: Fedora i3 spin).
-
-> **Atenção:** execute apenas após a etapa 3 concluída e com o Hyprland funcional.
-
-O script remove:
-
-| O que remove | Pacotes |
-|---|---|
-| i3 | `i3`, `i3status`, `i3lock`, `i3-config-fedora`, `python3-i3ipc`, `fedora-release-i3` |
-| LightDM | `lightdm`, `lightdm-gtk`, `lightdm-gobject`, `lightdm-gtk-greeter-settings` |
-| XFCE | `xfce4-terminal`, `xfce4-panel`, `xfce-polkit`, `libxfce4ui`, `libxfce4util`, `libxfce4windowing` |
-| Drivers Xorg | AMD, NVIDIA, VMware, QXL |
-| GNOME parcial | `gnome-abrt`, `gnome-themes-extra` |
-| Órfãos | via `dnf autoremove` |
-
-O script **mantém**:
-- `xorg-x11-server-Xwayland` — necessário para apps XWayland
-- `xorg-x11-drv-intel` — fallback para GPU Intel
-- `xorg-x11-drv-evdev`, `xorg-x11-drv-wacom` — input devices
-- `gnome-keyring` — gerenciamento de credenciais
-- `gnome-disk-utility` — gerenciamento de discos
-
-Também configura o systemd para iniciar sem display manager:
-```bash
-systemctl set-default multi-user.target
-```
-O Hyprland continua subindo automaticamente via `~/.bash_profile` na tty1.
-
----
-
-## Opcional - Forçar resolução do TTY/GRUB pelo monitor conectado
-
-```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/grub_resolution.sh | sudo bash
-```
-
-Execute este script após trocar de monitor para ajustar a resolução da tela de login do TTY.
-
-O script:
-- Detecta automaticamente o monitor externo conectado (ignora o `eDP` interno)
-- Lê o EDID do monitor via `/sys/class/drm/` e extrai a resolução preferida (DTD 1)
-- Instala `edid-decode` via `dnf` se não estiver presente
-- Atualiza `/etc/default/grub` com `video=`, `GRUB_GFXMODE` e `GRUB_GFXPAYLOAD_LINUX=keep`
-- Regenera o GRUB via `grub2-mkconfig`
-
-> Requer reboot para aplicar. Execute uma vez por monitor — não precisa rodar a cada boot.
-
----
-
-## Opcional - VS Code
-
-### 1. Instalar
-```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/vscode.sh | bash
-```
-
-O script:
-- Verifica se o `code` já está instalado (idempotente)
-- Importa a chave GPG da Microsoft
-- Adiciona o repositório oficial em `/etc/yum.repos.d/vscode.repo`
-- Instala via `dnf install code`
-
-### 2. Aplicar dotfiles
 ```bash
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash -s vscode
 ```
 
-O script:
+Se o VS Code estiver instalado, o script:
 - Instala as extensões via `scripts/vscode.sh`
 - Aplica os dotfiles via `linkr vscode`, criando o symlink de `settings.json` e `tasks.json`
 
-| Extensão | Uso |
-|----------|-----|
-| `vscodevim.vim` | Emulação de Vim no editor |
-| `catppuccin.catppuccin-vsc` | Tema de cores |
-| `alexdauenhauer.catppuccin-noctis-icons` | Tema de ícones |
-| `catppuccin.catppuccin-vsc-icons` | Ícones alternativos Catppuccin |
-| `anthropic.claude-code` | Claude Code integrado ao editor |
-
-> Se o VS Code não for detectado, o script exibe um aviso e encerra sem aplicar nada.
-
----
-
-## Opcional - Instalar kubectl
-
-```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/kubectl.sh | bash
-```
-
-Execute este script em máquinas que precisam interagir com clusters Kubernetes.
-
-O script:
-- Verifica se o `kubectl` já está instalado (idempotente)
-- Baixa a versão stable oficial via `dl.k8s.io`
-- Instala em `/usr/local/bin/kubectl`
-
----
-
-## Opcional - Sudo sem senha para o usuário atual
-
-```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/sudo_nopasswd.sh | sudo bash
-```
-
-Execute este script para configurar acesso `sudo` sem senha para o usuário atual.
-
-O script:
-- Detecta o usuário real via `$SUDO_USER`
-- Cria `/etc/sudoers.d/<usuario>_nopasswd` com a regra `NOPASSWD:ALL` e permissão `0440`
-- Valida o arquivo com `visudo -cf` antes de manter — reverte automaticamente se inválido
-
-> **Atenção:** concede privilégio amplo ao usuário. Execute apenas em ambientes controlados.
-
----
-
-## Opcional - Instalar Docker CE
-
-```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/docker.sh | bash
-```
-
-Execute este script em máquinas que precisam do Docker — especialmente servidores de laboratório CI/CD.
-
-O script:
-- Remove pacotes conflitantes (versões antigas ou do sistema)
-- Adiciona o repositório oficial do Docker para Fedora
-- Instala `docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin` e `docker-compose-plugin`
-- Inicia e habilita o serviço via `systemctl`
-- Adiciona o usuário atual ao grupo `docker` para uso sem sudo
-
-> Após a execução, rode `newgrp docker` ou abra uma nova sessão para aplicar o grupo.
-
----
-
-## Opcional - Configurar banner de login no TTY
-
-Após aplicar os dotfiles (etapa 4), execute:
-
-```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash -s issue
-```
-
-Configura o `/etc/issue` com um banner ASCII art exibido na tela de login do TTY, com cores Catppuccin Mocha.
-
-> O banner aparece **apenas na tela de login do TTY** — não interfere com terminais abertos após o login.
-
-O comando aplica:
-- ASCII art **GARDEN** em mauve (`#cba6f7`)
-- Linha com distro, hardware e compositor em blue (`#89b4fa`)
-- Separadores em overlay (`#45475a`)
+> Se o VS Code não for detectado, o script exibe um aviso e encerra sem aplicar nada. Para instalar o VS Code, veja [VS Code](#vs-code).
 
 ---
 
@@ -369,14 +178,24 @@ O `linkr` é o script de aplicação de dotfiles do repositório privado. Ele pe
 **Uso:**
 ```bash
 ./linkr                   # exibe ajuda e apps disponíveis
-./linkr core              # aplica dotfiles essenciais: vim, git, nvim
+./linkr core              # aplica dotfiles essenciais: vim, git, nvim, ssh
 ./linkr desk_hypr         # aplica dotfiles do ambiente Hyprland: hypr, waybar, kitty
 ./linkr vscodium          # aplica dotfiles do VSCodium: settings.json, tasks.json
+./linkr vscode            # aplica dotfiles do VS Code: settings.json, tasks.json
 ./linkr core desk_hypr    # aplica ambos os grupos
 ./linkr all               # aplica todos os apps disponíveis
 ./linkr waybar            # aplica um app individual
-./linkr issue             # configura o banner de login no TTY (/etc/issue)
+./linkr issue             # configura o banner de login no TTY (/etc/issue.d/)
 ```
+
+**Grupos disponíveis:**
+
+| Grupo | Apps |
+|-------|------|
+| `core` | `vim`, `git`, `nvim`, `ssh` |
+| `desk_hypr` | `hypr`, `waybar`, `kitty` |
+| `vscodium` | `.config/VSCodium/User/settings.json`, `.config/VSCodium/User/tasks.json` |
+| `vscode` | `.config/Code/User/settings.json`, `.config/Code/User/tasks.json` |
 
 **Filosofia:** cada app ocupa uma pasta no repo que espelha a estrutura do `$HOME`. O `linkr` percorre os arquivos com `find` recursivo e cria o symlink correspondente para cada um.
 
@@ -388,48 +207,12 @@ dotfile/vim/.vim/vimrc                      →  ~/.vim/vimrc
 
 Se um symlink já existir e apontar para o caminho correto, ele é ignorado. Se existir um arquivo ou link diferente no destino, ele é removido antes de criar o novo.
 
-**Grupos disponíveis:**
-
-| Grupo | Apps |
-|-------|------|
-| `core` | `vim`, `git`, `nvim`, `ssh` |
-| `desk_hypr` | `hypr`, `waybar`, `kitty` |
-| `vscodium` | `.config/VSCodium/User/settings.json`, `.config/VSCodium/User/tasks.json` |
-| `vscode` | `.config/Code/User/settings.json`, `.config/Code/User/tasks.json` |
-
-> O comando `issue` é desacoplado de todos os grupos — inclusive do `all` — e deve ser executado explicitamente. Ele escreve em `/etc/issue` e requer `sudo`.
-
----
-
-## VSCodium
-
-As configurações do VSCodium ficam no repositório privado em `vscodium/.config/VSCodium/User/` e são aplicadas via `linkr vscodium`.
-
-**Keybindings vim (`<leader> = Space`):**
-
-| Atalho | Ação |
-|--------|------|
-| `<leader>w` | Salvar arquivo |
-| `<leader>e` | Toggle sidebar |
-| `<leader>p` | Quick open (busca de arquivos) |
-| `<leader>n` | Próxima aba |
-| `<leader>[` | Aba anterior |
-| `<leader>t` | Toggle terminal integrado |
-| `<leader>a` | Toggle painel auxiliar (Secondary Sidebar) |
-| `<leader>c` | Focar painel auxiliar |
-| `<leader>gs` | Sync git — auto commit e push via `sync_git.sh` |
-| `<leader>/` | Limpar highlight de busca |
-| `;` | Abre o command mode (`:`) |
-| `q` | Fechar aba (`:q`) |
-| `<C-h/j/k/l>` | Navegar entre painéis |
-
-**Task: sync git**
-
-A task `sync git` é disparada pelo `<leader>gs` e executa `~/.dotfiles/scripts/sync_git.sh`, que itera pelos repositórios pessoais (`.dotfiles`, `dotfiles`, `dotstrap`), faz pull com rebase e push com mensagem automática de timestamp.
+> O comando `issue` é desacoplado de todos os grupos — inclusive do `all` — e deve ser executado explicitamente. Ele escreve em `/etc/issue.d/garden.issue` (sobrevive a `dnf upgrade`) e requer `sudo`.
 
 ---
 
 ## Neovim
+
 A configuração do Neovim é minimal e focada em produtividade desde o primeiro uso:
 
 | Plugin | Função |
@@ -461,7 +244,233 @@ Os plugins são instalados automaticamente na primeira abertura do `nvim`, sem n
 
 ---
 
+## VSCodium
+
+As configurações do VSCodium ficam no repositório privado em `vscodium/.config/VSCodium/User/` e são aplicadas via `linkr vscodium`.
+
+**Keybindings vim (`<leader> = Space`):**
+
+| Atalho | Ação |
+|--------|------|
+| `<leader>w` | Salvar arquivo |
+| `<leader>e` | Toggle sidebar |
+| `<leader>p` | Quick open (busca de arquivos) |
+| `<leader>n` | Próxima aba |
+| `<leader>[` | Aba anterior |
+| `<leader>t` | Toggle terminal integrado |
+| `<leader>a` | Toggle painel auxiliar (Secondary Sidebar) |
+| `<leader>c` | Focar painel auxiliar |
+| `<leader>gs` | Sync git — auto commit e push via `sync_git.sh` |
+| `<leader>/` | Limpar highlight de busca |
+| `;` | Abre o command mode (`:`) |
+| `q` | Fechar aba (`:q`) |
+| `<C-h/j/k/l>` | Navegar entre painéis |
+
+**Task: sync git**
+
+A task `sync git` é disparada pelo `<leader>gs` e executa `~/.dotfiles/scripts/sync_git.sh`, que itera pelos repositórios pessoais (`.dotfiles`, `dotfiles`, `dotstrap`), faz pull com rebase e push com mensagem automática de timestamp.
+
+**Extensões instaladas:**
+
+| Extensão | Uso |
+|----------|-----|
+| `vscodevim.vim` | Emulação de Vim no editor |
+| `catppuccin.catppuccin-vsc` | Tema de cores |
+| `alexdauenhauer.catppuccin-noctis-icons` | Tema de ícones |
+| `catppuccin.catppuccin-vsc-icons` | Ícones alternativos Catppuccin |
+| `anthropic.claude-code` | Claude Code integrado ao editor |
+
+---
+
+## Ferramentas opcionais
+
+### Sistema headless/servidor
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/headless.sh | bash
+```
+
+Execute em máquinas que serão usadas como servidores headless — especialmente para rodar **k3d/Kubernetes** em laboratório.
+
+> **Recomendado:** reiniciar o sistema após a execução para garantir que todas as configurações entrem em vigor (especialmente GRUB e logind).
+
+| Configuração | Detalhe |
+|---|---|
+| Tampa fechada ignorada | `HandleLidSwitch=ignore` via `/etc/systemd/logind.conf.d/lid.conf` |
+| SSH keepalive | `ClientAliveInterval=60` / `ClientAliveCountMax=3` — evita travamento de conexões SSH ociosas |
+| Swap desabilitado | `swapoff -a` + remoção da entrada no `/etc/fstab` — requisito do k3s |
+| Cockpit desabilitado | `systemctl disable --now cockpit.socket` |
+| firewalld desabilitado | controle de rede delegado ao Kubernetes (Network Policies, kube-proxy) |
+| GRUB timeout zerado | `GRUB_TIMEOUT=0` em `/etc/default/grub` + `grub2-mkconfig` |
+| Plymouth removido | `dnf remove plymouth` — bootloader gráfico desnecessário em servidor |
+| SELinux → `disabled` | compatibilidade com k3d/k3s — requer reboot para efeito completo |
+
+> **SELinux `disabled`:** requer reboot para entrar em vigor completamente. Para reverter para `enforcing` no futuro, será necessário reboot + relabel do filesystem.
+
+> **firewalld desabilitado:** em laboratório headless em rede local, o controle de rede fica a cargo do próprio Kubernetes. Para reativar: `systemctl enable --now firewalld`.
+
+### Banner de login no TTY
+
+Após aplicar os dotfiles (etapa 4), execute:
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash -s issue
+```
+
+Configura o `/etc/issue.d/garden.issue` com um banner ASCII art exibido na tela de login do TTY, com cores Catppuccin Mocha. O arquivo fica em `/etc/issue.d/` para sobreviver a atualizações do sistema via `dnf upgrade`.
+
+> O banner aparece **apenas na tela de login do TTY** — não interfere com terminais abertos após o login.
+
+O comando aplica:
+- ASCII art **GARDEN** em mauve (`#cba6f7`)
+- Linha com distro, hardware e compositor em blue (`#89b4fa`)
+- Separadores em overlay (`#45475a`)
+
+### Unlock automático do LUKS2 via keyfile
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/luks_keyfile.sh | sudo bash
+```
+
+Execute em máquinas com disco criptografado (LUKS2) para eliminar a necessidade de digitar a senha a cada boot.
+
+O script:
+- Detecta a partição LUKS automaticamente via `lsblk`
+- Obtém o UUID da partição para nomear o keyfile
+- Solicita a senha LUKS interativamente — nunca em argumento ou arquivo
+- Valida a senha antes de prosseguir
+- Gera um keyfile aleatório (512 bytes) em `/etc/cryptsetup-keys.d/luks-UUID.key` com permissão `0400`
+- Configura o dracut para incluir o keyfile no initramfs
+- Adiciona o keyfile ao slot LUKS via `cryptsetup luksAddKey`
+- Regenera o initramfs com `dracut -fv`
+
+> **Idempotente:** se o keyfile já existir, o script encerra sem fazer alterações.
+
+> **IMPORTANTE:** a senha LUKS original continua válida como recovery. Guarde-a em local seguro — sem ela não há como recuperar o acesso caso o initramfs seja corrompido ou o keyfile removido.
+
+### Limpar ambientes desktop desnecessários
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/cleanup_desktop.sh | bash
+```
+
+Execute em máquinas que vieram com i3, XFCE ou LightDM pré-instalados (ex: Fedora i3 spin).
+
+> **Atenção:** execute apenas após a etapa 3 concluída e com o Hyprland funcional.
+
+O script remove:
+
+| O que remove | Pacotes |
+|---|---|
+| i3 | `i3`, `i3status`, `i3lock`, `i3-config-fedora`, `python3-i3ipc`, `fedora-release-i3` |
+| LightDM | `lightdm`, `lightdm-gtk`, `lightdm-gobject`, `lightdm-gtk-greeter-settings` |
+| XFCE | `xfce4-terminal`, `xfce4-panel`, `xfce-polkit`, `libxfce4ui`, `libxfce4util`, `libxfce4windowing` |
+| Drivers Xorg | AMD, NVIDIA, VMware, QXL |
+| GNOME parcial | `gnome-abrt`, `gnome-themes-extra` |
+| Órfãos | via `dnf autoremove` |
+
+O script **mantém**:
+- `xorg-x11-server-Xwayland` — necessário para apps XWayland
+- `xorg-x11-drv-intel` — fallback para GPU Intel
+- `xorg-x11-drv-evdev`, `xorg-x11-drv-wacom` — input devices
+- `gnome-keyring` — gerenciamento de credenciais
+- `gnome-disk-utility` — gerenciamento de discos
+
+Também configura o systemd para iniciar sem display manager:
+```bash
+systemctl set-default multi-user.target
+```
+O Hyprland continua subindo automaticamente via `~/.bash_profile` na tty1.
+
+### Forçar resolução do TTY/GRUB
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/grub_resolution.sh | sudo bash
+```
+
+Execute após trocar de monitor para ajustar a resolução da tela de login do TTY.
+
+O script:
+- Detecta automaticamente o monitor externo conectado (ignora o `eDP` interno)
+- Lê o EDID do monitor via `/sys/class/drm/` e extrai a resolução preferida (DTD 1)
+- Instala `edid-decode` via `dnf` se não estiver presente
+- Atualiza `/etc/default/grub` com `video=`, `GRUB_GFXMODE` e `GRUB_GFXPAYLOAD_LINUX=keep`
+- Regenera o GRUB via `grub2-mkconfig`
+
+> Requer reboot para aplicar. Execute uma vez por monitor — não precisa rodar a cada boot.
+
+### VS Code
+
+**1. Instalar:**
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/vscode.sh | bash
+```
+
+O script:
+- Verifica se o `code` já está instalado (idempotente)
+- Importa a chave GPG da Microsoft
+- Adiciona o repositório oficial em `/etc/yum.repos.d/vscode.repo`
+- Instala via `dnf install code`
+
+**2. Aplicar dotfiles:** veja [4.4 — VS Code](#44--vs-code).
+
+**Extensões instaladas:**
+
+| Extensão | Uso |
+|----------|-----|
+| `vscodevim.vim` | Emulação de Vim no editor |
+| `catppuccin.catppuccin-vsc` | Tema de cores |
+| `alexdauenhauer.catppuccin-noctis-icons` | Tema de ícones |
+| `catppuccin.catppuccin-vsc-icons` | Ícones alternativos Catppuccin |
+| `anthropic.claude-code` | Claude Code integrado ao editor |
+
+### kubectl
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/kubectl.sh | bash
+```
+
+Execute em máquinas que precisam interagir com clusters Kubernetes.
+
+O script:
+- Verifica se o `kubectl` já está instalado (idempotente)
+- Baixa a versão stable oficial via `dl.k8s.io`
+- Instala em `/usr/local/bin/kubectl`
+
+### Sudo sem senha
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/sudo_nopasswd.sh | sudo bash
+```
+
+O script:
+- Detecta o usuário real via `$SUDO_USER`
+- Cria `/etc/sudoers.d/<usuario>_nopasswd` com a regra `NOPASSWD:ALL` e permissão `0440`
+- Valida o arquivo com `visudo -cf` antes de manter — reverte automaticamente se inválido
+
+> **Atenção:** concede privilégio amplo ao usuário. Execute apenas em ambientes controlados.
+
+### Docker CE
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/docker.sh | bash
+```
+
+Execute em máquinas que precisam do Docker — especialmente servidores de laboratório CI/CD.
+
+O script:
+- Remove pacotes conflitantes (versões antigas ou do sistema)
+- Adiciona o repositório oficial do Docker para Fedora
+- Instala `docker-ce`, `docker-ce-cli`, `containerd.io`, `docker-buildx-plugin` e `docker-compose-plugin`
+- Inicia e habilita o serviço via `systemctl`
+- Adiciona o usuário atual ao grupo `docker` para uso sem sudo
+
+> Após a execução, rode `newgrp docker` ou abra uma nova sessão para aplicar o grupo.
+
+---
+
 ## Estrutura do repositório
+
 ```
 dotstrap/              # repositório público
 ├── bootstrap/
@@ -488,17 +497,13 @@ dotfile/                        # repositório privado
 │   ├── vscode.sh               # instalação de extensões do VS Code
 │   └── sync_git.sh             # auto commit e push dos repositórios pessoais
 ├── vscodium/
-│   └── .config/
-│       └── VSCodium/
-│           └── User/
-│               ├── settings.json   # configurações, tema e keybindings vim
-│               └── tasks.json      # task sync git (<leader>gs)
+│   └── .config/VSCodium/User/
+│       ├── settings.json       # configurações, tema e keybindings vim
+│       └── tasks.json          # task sync git (<leader>gs)
 ├── vscode/
-│   └── .config/
-│       └── Code/
-│           └── User/
-│               ├── settings.json   # configurações, tema e keybindings vim
-│               └── tasks.json      # task sync git (<leader>gs)
+│   └── .config/Code/User/
+│       ├── settings.json       # configurações, tema e keybindings vim
+│       └── tasks.json          # task sync git (<leader>gs)
 ├── git/
 │   └── .gitconfig
 ├── vim/
@@ -516,46 +521,43 @@ dotfile/                        # repositório privado
 │       ├── terminal.vim
 │       └── theme.vim
 ├── nvim/
-│   └── .config/
-│       └── nvim/
-│           ├── init.lua
-│           └── lua/
-│               ├── config/
-│               │   ├── keymaps.lua
-│               │   ├── lazy.lua
-│               │   └── options.lua
-│               └── plugins/
-│                   ├── catppuccin.lua
-│                   ├── devicons.lua
-│                   ├── gitsigns.lua
-│                   ├── lualine.lua
-│                   ├── nvim-tree.lua
-│                   ├── plenary.lua
-│                   ├── telescope.lua
-│                   ├── toggleterm.lua
-│                   ├── tokyonight.lua
-│                   └── treesitter.lua
+│   └── .config/nvim/
+│       ├── init.lua
+│       └── lua/
+│           ├── config/
+│           │   ├── keymaps.lua
+│           │   ├── lazy.lua
+│           │   └── options.lua
+│           └── plugins/
+│               ├── catppuccin.lua
+│               ├── devicons.lua
+│               ├── gitsigns.lua
+│               ├── lualine.lua
+│               ├── nvim-tree.lua
+│               ├── plenary.lua
+│               ├── telescope.lua
+│               ├── toggleterm.lua
+│               ├── tokyonight.lua
+│               └── treesitter.lua
 ├── waybar/
-│   └── .config/
-│       └── waybar/
-│           ├── config.jsonc
-│           └── style.css
+│   └── .config/waybar/
+│       ├── config.jsonc
+│       └── style.css
 ├── hypr/
-│   └── .config/
-│       └── hypr/
-│           ├── hyprland.conf
-│           ├── hyprlock.conf
-│           ├── hypridle.conf
-│           └── mocha.conf
+│   └── .config/hypr/
+│       ├── hyprland.conf
+│       ├── hyprlock.conf
+│       ├── hypridle.conf
+│       └── mocha.conf
 └── kitty/
-    └── .config/
-        └── kitty/
-            └── kitty.conf
+    └── .config/kitty/
+        └── kitty.conf
 ```
 
 ---
 
 ## Requisitos
+
 - Sistema baseado em **RHEL/Fedora** (usa `dnf`)
 - Acesso `sudo`
 - `curl` e `bash` disponíveis no sistema base
@@ -563,4 +565,5 @@ dotfile/                        # repositório privado
 ---
 
 ## Licença
+
 MIT
