@@ -43,21 +43,25 @@ fi
 
 log "Instalando Zen Browser"
 ZEN_URL=$(curl -fsSL https://api.github.com/repos/zen-browser/desktop/releases/latest \
-  | grep -o '"browser_download_url": *"[^"]*linux-x86_64\.tar\.bz2"' \
+  | grep -o '"browser_download_url": *"[^"]*zen\.linux-x86_64\.tar\.xz"' \
   | grep -o 'https://[^"]*')
-mkdir -p "$HOME/.local/bin" "$HOME/.local/share/applications"
-curl -fsSL "$ZEN_URL" | tar -xj -C "$HOME/.local/bin" --strip-components=1 zen/zen
+mkdir -p "$HOME/.local/lib/zen-browser" "$HOME/.local/bin" "$HOME/.local/share/applications"
+curl -fsSL "$ZEN_URL" | tar -xJ -C "$HOME/.local/lib/zen-browser" --strip-components=1
+cat > "$HOME/.local/bin/zen" << 'EOF'
+#!/usr/bin/env bash
+exec "$HOME/.local/lib/zen-browser/zen-bin" "$@"
+EOF
+sed -i "s|\$HOME|$HOME|g" "$HOME/.local/bin/zen"
 chmod +x "$HOME/.local/bin/zen"
-cat > "$HOME/.local/share/applications/zen-browser.desktop" << 'EOF'
+cat > "$HOME/.local/share/applications/zen-browser.desktop" << EOF
 [Desktop Entry]
 Name=Zen Browser
-Exec=/home/joseph/.local/bin/zen %u
-Icon=zen-browser
+Exec=$HOME/.local/bin/zen %u
+Icon=$HOME/.local/lib/zen-browser/browser/chrome/icons/default/default128.png
 Type=Application
 Categories=Network;WebBrowser;
 MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
 EOF
-sed -i "s|/home/joseph|$HOME|g" "$HOME/.local/share/applications/zen-browser.desktop"
-log "Zen Browser instalado em ~/.local/bin/zen"
+log "Zen Browser instalado em ~/.local/lib/zen-browser"
 
 log "Ambiente desktop instalado com sucesso"
