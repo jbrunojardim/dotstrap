@@ -98,7 +98,7 @@ O script:
 | `hypridle` | Daemon de bloqueio automático por inatividade |
 | `hyprshot` | Capturas de tela |
 | `waybar` | Barra de status |
-| `alacritty` | Emulador de terminal |
+| `kitty` | Emulador de terminal |
 | `wofi` | Launcher de aplicações |
 | `wlogout` | Menu de energia |
 | `swaync` | Daemon de notificações |
@@ -126,7 +126,7 @@ O script:
 ```bash
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash -s desk_hypr
 ```
-Além do `core`, executa `linkr desk_hypr` se o Hyprland estiver instalado, aplicando os dotfiles de `hypr`, `waybar` e `alacritty`.
+Além do `core`, executa `linkr desk_hypr` se o Hyprland estiver instalado, aplicando os dotfiles de `hypr`, `waybar` e `kitty`.
 
 > Requer a etapa 3 executada previamente. Se o Hyprland não for detectado, o script exibe um aviso e encerra sem aplicar os dotfiles de desktop.
 
@@ -393,7 +393,7 @@ Se um symlink já existir e apontar para o caminho correto, ele é ignorado. Se 
 | Grupo | Apps |
 |-------|------|
 | `core` | `vim`, `git`, `nvim`, `ssh` |
-| `desk_hypr` | `hypr`, `waybar`, `alacritty` |
+| `desk_hypr` | `hypr`, `waybar`, `kitty` |
 | `vscodium` | `.config/VSCodium/User/settings.json`, `.config/VSCodium/User/tasks.json` |
 | `vscode` | `.config/Code/User/settings.json`, `.config/Code/User/tasks.json` |
 
@@ -547,10 +547,10 @@ dotfile/                        # repositório privado
 │           ├── hyprlock.conf
 │           ├── hypridle.conf
 │           └── mocha.conf
-└── alacritty/
+└── kitty/
     └── .config/
-        └── alacritty/
-            └── alacritty.toml
+        └── kitty/
+            └── kitty.conf
 ```
 
 ---

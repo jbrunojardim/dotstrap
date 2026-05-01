@@ -13,12 +13,12 @@ sudo dnf install -y \
   hypridle \
   hyprshot \
   waybar \
-  alacritty \
+  kitty \
   wofi \
   swaync \
   unzip
 
-if fc-list | grep -q "JetBrainsMono Nerd Font"; then
+if ls "$HOME/.local/share/fonts/JetBrainsMono"*.ttf &>/dev/null; then
   log "JetBrainsMono Nerd Font já instalada, pulando..."
 else
   log "Instalando JetBrainsMono Nerd Font"
