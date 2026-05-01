@@ -79,6 +79,9 @@ ssh -T git@gitlab-google
 ---
 
 ## Etapa 3 - Instalar o ambiente desktop (opcional)
+
+> Execute em máquinas com monitor — **não executar em servidores headless**. Para servidores, pule para a Etapa 4 ou use `bootstrap/headless.sh`.
+
 ```bash
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/desktop.sh | bash
 ```
