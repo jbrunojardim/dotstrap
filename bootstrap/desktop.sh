@@ -13,7 +13,7 @@ sudo dnf install -y \
   hypridle \
   hyprshot \
   waybar \
-  kitty \
+  alacritty \
   wofi \
   swaync \
   unzip
@@ -40,5 +40,24 @@ EOF
 else
   log "Auto-start já presente no ~/.bash_profile, pulando..."
 fi
+
+log "Instalando Zen Browser"
+ZEN_URL=$(curl -fsSL https://api.github.com/repos/zen-browser/desktop/releases/latest \
+  | grep -o '"browser_download_url": *"[^"]*linux-x86_64\.tar\.bz2"' \
+  | grep -o 'https://[^"]*')
+mkdir -p "$HOME/.local/bin" "$HOME/.local/share/applications"
+curl -fsSL "$ZEN_URL" | tar -xj -C "$HOME/.local/bin" --strip-components=1 zen/zen
+chmod +x "$HOME/.local/bin/zen"
+cat > "$HOME/.local/share/applications/zen-browser.desktop" << 'EOF'
+[Desktop Entry]
+Name=Zen Browser
+Exec=/home/joseph/.local/bin/zen %u
+Icon=zen-browser
+Type=Application
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+EOF
+sed -i "s|/home/joseph|$HOME|g" "$HOME/.local/share/applications/zen-browser.desktop"
+log "Zen Browser instalado em ~/.local/bin/zen"
 
 log "Ambiente desktop instalado com sucesso"
