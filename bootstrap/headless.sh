@@ -14,17 +14,12 @@ HandleLidSwitchDocked=ignore
 EOF
 log "Tampa: HandleLidSwitch=ignore aplicado"
 
-# ─── SSH Keepalive ────────────────────────────────────────────────────────────
-log "Configurando SSH keepalive (evita travamento de conexões ociosas)"
-SSHD_CONFIG="/etc/ssh/sshd_config"
-if [[ -f "$SSHD_CONFIG" ]]; then
-  sudo sed -i 's/#\?ClientAliveInterval.*/ClientAliveInterval 60/' "$SSHD_CONFIG"
-  sudo sed -i 's/#\?ClientAliveCountMax.*/ClientAliveCountMax 3/' "$SSHD_CONFIG"
-  sudo systemctl restart sshd
-  log "SSH keepalive aplicado: ClientAliveInterval=60, ClientAliveCountMax=3"
-else
-  log "$SSHD_CONFIG não encontrado — pulando"
-fi
+# ─── NIC autoconnect ──────────────────────────────────────────────────────────
+log "Garantindo autoconnect nas interfaces de rede (nmcli)"
+while IFS= read -r conn; do
+  nmcli connection modify "$conn" connection.autoconnect yes
+  log "autoconnect ativado: $conn"
+done < <(nmcli -t -f NAME,TYPE connection show | awk -F: '$1 ~ /^(eth|enp|ens|eno|wlp|wlan|wifi|wi-fi)/i {print $1}')
 
 # ─── Swap ─────────────────────────────────────────────────────────────────────
 log "Desabilitando swap (requisito do k3s/Kubernetes)"
@@ -122,13 +117,13 @@ log "[bootstrap_server] Configurações de servidor aplicadas com sucesso!"
 echo ""
 echo "    Resumo:"
 echo "      - Tampa fechada:  ignorada (HandleLidSwitch=ignore)"
+echo "      - NIC autoconnect: ativado em todas as interfaces ethernet"
 echo "      - Swap:           desabilitado (requisito k3s)"
 echo "      - Cockpit:        desabilitado"
 echo "      - firewalld:      desabilitado (controle de rede via Kubernetes)"
 echo "      - GRUB timeout:   0s"
 echo "      - Plymouth:       removido"
-echo "      - SELinux:        disabled
-      - SSH keepalive:  ClientAliveInterval=60 / ClientAliveCountMax=3"
+echo "      - SELinux:        disabled"
 echo ""
 echo "    Recomendado: reiniciar o sistema para garantir que todas as"
 echo "    configurações entrem em vigor (especialmente GRUB e tampa)."
