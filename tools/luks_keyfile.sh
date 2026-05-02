@@ -83,12 +83,20 @@ unset LUKS_PASSWORD
 # ─── Adicionar keyfile ao LUKS ────────────────────────────────────────────────
 cryptsetup luksAddKey \
   --key-file "$PASSWORD_FILE" \
-  --pbkdf pbkdf2 \
-  --pbkdf-force-iterations 500000 \
   "$LUKS_DEVICE" \
   "$KEYFILE"
 
 log "Keyfile adicionado ao LUKS com sucesso"
+
+# ─── Atualizar /etc/crypttab ──────────────────────────────────────────────────
+log "Atualizando /etc/crypttab"
+CRYPTTAB_NAME="luks-${LUKS_UUID}"
+if grep -q "^${CRYPTTAB_NAME}" /etc/crypttab; then
+  sed -i "s|^${CRYPTTAB_NAME}.*|${CRYPTTAB_NAME} UUID=${LUKS_UUID} ${KEYFILE} discard|" /etc/crypttab
+else
+  echo "${CRYPTTAB_NAME} UUID=${LUKS_UUID} ${KEYFILE} discard" >> /etc/crypttab
+fi
+log "/etc/crypttab atualizado"
 
 # ─── Remover arquivo temporário ───────────────────────────────────────────────
 rm -f "$PASSWORD_FILE"
