@@ -60,6 +60,7 @@ install_hyprland_dnf() {
     swaync \
     gnome-keyring \
     xdg-desktop-portal-hyprland \
+    pavucontrol \
     unzip
 }
 
@@ -78,6 +79,7 @@ install_hyprland_pacman() {
     swaync \
     gnome-keyring \
     xdg-desktop-portal-hyprland \
+    pavucontrol \
     unzip
 }
 
