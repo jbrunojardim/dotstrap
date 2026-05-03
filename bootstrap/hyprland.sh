@@ -68,6 +68,7 @@ install_hyprland_pacman() {
   sudo pacman -S --needed --noconfirm \
     grim \
     slurp \
+    wl-clipboard \
     hyprland \
     hyprlock \
     hypridle \
