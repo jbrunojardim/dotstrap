@@ -226,7 +226,7 @@ main() {
   install_zen
 
   section "Etapa 1 concluída"
-  log "Sistema pronto. Execute o próximo passo: bootstrap_ssh.sh"
+  log "Sistema pronto. Execute o próximo passo: ssh_keys.sh"
 }
 
 main "$@"
