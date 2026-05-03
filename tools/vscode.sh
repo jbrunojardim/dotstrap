@@ -22,24 +22,23 @@ error()   { echo -e "${RED}[erro]${NC}     $*" >&2; }
 section() { echo -e "\n${CYAN}━━━ $* ━━━${NC}\n"; }
 
 # -----------------------------------------------------------------------------
-# Main
+# Instalação / atualização dos binários
 # -----------------------------------------------------------------------------
-main() {
-  section "Instalação do VS Code"
+install_binaries() {
+  mkdir -p "$HOME/.local/lib/vscode"
 
-  if [[ -f "$HOME/.local/lib/vscode/code" ]]; then
-    log "VS Code já instalado, pulando..."
-    exit 0
-  fi
-
-  log "Instalando VS Code..."
-
-  mkdir -p "$HOME/.local/lib/vscode" \
-           "$HOME/.local/bin" \
-           "$HOME/.local/share/applications"
-
+  log "Baixando VS Code mais recente..."
   curl -fsSL "https://update.code.visualstudio.com/latest/linux-x64/stable" \
     | tar -xz -C "$HOME/.local/lib/vscode" --strip-components=1
+
+  log "Versão instalada: $("$HOME/.local/lib/vscode/code" --version | head -1)"
+}
+
+# -----------------------------------------------------------------------------
+# Criação do wrapper e .desktop (apenas na instalação inicial)
+# -----------------------------------------------------------------------------
+install_launcher() {
+  mkdir -p "$HOME/.local/bin" "$HOME/.local/share/applications"
 
   cat > "$HOME/.local/bin/code" << 'EOF'
 #!/usr/bin/env bash
@@ -58,9 +57,47 @@ Categories=Development;TextEditor;
 MimeType=text/plain;application/x-shellscript;
 StartupNotify=true
 EOF
+}
 
-  log "VS Code instalado em ~/.local/lib/vscode"
-  log "Versão: $("$HOME/.local/lib/vscode/code" --version | head -1)"
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
+main() {
+  local update=false
+  [[ "${1:-}" == "--update" ]] && update=true
+
+  if $update; then
+    section "Atualização do VS Code"
+
+    if [[ ! -f "$HOME/.local/lib/vscode/code" ]]; then
+      error "VS Code não está instalado. Execute o script sem --update primeiro."
+      exit 1
+    fi
+
+    local versao_atual
+    versao_atual=$("$HOME/.local/lib/vscode/code" --version | head -1)
+    log "Versão atual: $versao_atual"
+
+    log "Removendo binários antigos..."
+    rm -rf "$HOME/.local/lib/vscode"
+
+    install_binaries
+
+    log "Atualização concluída."
+  else
+    section "Instalação do VS Code"
+
+    if [[ -f "$HOME/.local/lib/vscode/code" ]]; then
+      log "VS Code já instalado, pulando..."
+      log "Para atualizar, execute: bash vscode.sh --update"
+      exit 0
+    fi
+
+    install_binaries
+    install_launcher
+
+    log "VS Code instalado em ~/.local/lib/vscode"
+  fi
 }
 
 main "$@"
