@@ -122,3 +122,7 @@ sudo rm /etc/cryptsetup-keys.d/luks-<UUID>.key
 ```
 
 Reverta o `/etc/crypttab` para `none` e regenere o initramfs.
+
+---
+
+← [Voltar ao README](../README.md)
