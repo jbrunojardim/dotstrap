@@ -61,6 +61,7 @@ get_packages() {
         ncurses
         openssh
         openssh-server
+        ffmpeg
       )
       ;;
     pacman)
@@ -75,6 +76,7 @@ get_packages() {
         ncurses
         openssh
         # openssh já inclui cliente + servidor no Arch
+        ffmpeg
       )
       ;;
     apt)
@@ -89,6 +91,7 @@ get_packages() {
         libncurses-dev
         openssh-client
         openssh-server
+        ffmpeg
       )
       ;;
   esac
