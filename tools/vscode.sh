@@ -60,6 +60,25 @@ EOF
 }
 
 # -----------------------------------------------------------------------------
+# Configuração do code-flags.conf (autenticação + Wayland)
+# -----------------------------------------------------------------------------
+install_flags() {
+  local flags_file="$HOME/.config/code-flags.conf"
+  mkdir -p "$HOME/.config"
+
+  if [[ -f "$flags_file" ]]; then
+    log "code-flags.conf já existe, pulando..."
+    return
+  fi
+
+  cat > "$flags_file" << 'EOF'
+--password-store=gnome-libsecret
+EOF
+
+  log "code-flags.conf criado em ~/.config/code-flags.conf"
+}
+
+# -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
 main() {
@@ -95,6 +114,7 @@ main() {
 
     install_binaries
     install_launcher
+    install_flags
 
     log "VS Code instalado em ~/.local/lib/vscode"
   fi
