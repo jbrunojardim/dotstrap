@@ -56,7 +56,7 @@ if [[ "${1:-}" == "vscodium" ]]; then
 fi
 
 if [[ "${1:-}" == "vscode" ]]; then
-  if command -v code &>/dev/null; then
+  if command -v code &>/dev/null || [[ -f "$HOME/.local/bin/code" ]]; then
     log "VS Code detectado — instalando extensões"
     bash "$DOTFILES_DIR/scripts/vscode.sh"
     log "Aplicando dotfiles vscode"
