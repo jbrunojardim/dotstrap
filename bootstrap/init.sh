@@ -22,6 +22,12 @@ error()   { echo -e "${RED}[erro]${NC}     $*" >&2; }
 section() { echo -e "\n${CYAN}━━━ $* ━━━${NC}\n"; }
 
 # -----------------------------------------------------------------------------
+# Sudo keepalive — solicita senha antecipadamente e mantém cache ativo
+# -----------------------------------------------------------------------------
+sudo -v
+while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
+
+# -----------------------------------------------------------------------------
 # Detecção do gestor de pacotes
 # -----------------------------------------------------------------------------
 detect_pkg_manager() {
