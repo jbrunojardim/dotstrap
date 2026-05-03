@@ -72,7 +72,6 @@ install_hyprland_pacman() {
     waybar \
     kitty \
     wofi \
-    wlogout \
     swaync \
     gnome-keyring \
     xdg-desktop-portal-hyprland \
