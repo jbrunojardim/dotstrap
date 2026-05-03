@@ -26,6 +26,8 @@ fi
 if [[ "${1:-}" != "issue" ]] && [[ "${1:-}" != "vscodium" ]] && [[ "${1:-}" != "vscode" ]]; then
   log "Executando linkr core"
   bash "$DOTFILES_DIR/linkr" core
+  log "Executando linkr claude"
+  bash "$DOTFILES_DIR/linkr" claude
 fi
 
 if [[ "${1:-}" == "desk_hypr" ]]; then
