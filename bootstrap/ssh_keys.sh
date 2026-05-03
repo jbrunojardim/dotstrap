@@ -22,7 +22,7 @@ section() { echo -e "\n${CYAN}━━━ $* ━━━${NC}\n"; }
 # -----------------------------------------------------------------------------
 # Configuração das chaves
 # -----------------------------------------------------------------------------
-KEY_GITHUB="${HOME}/.ssh/github-dotfiles"
+KEY_GITHUB="${HOME}/.ssh/github"
 KEY_GITLAB="${HOME}/.ssh/gitlab"
 SSH_CONFIG="${HOME}/.ssh/config"
 
@@ -95,7 +95,7 @@ main() {
   mkdir -p "${HOME}/.ssh"
   chmod 700 "${HOME}/.ssh"
 
-  generate_key "$KEY_GITHUB" "github-dotfiles"
+  generate_key "$KEY_GITHUB" "github"
   generate_key "$KEY_GITLAB" "gitlab"
 
   configure_ssh_config
