@@ -1,59 +1,76 @@
 #!/usr/bin/env bash
+# =============================================================================
+# ssh_keys.sh
+# Etapa 2 — Geração de chaves SSH para GitHub e GitLab
+# =============================================================================
+
 set -euo pipefail
 
-log() { printf "\n==> %s\n" "$*"; }
+# -----------------------------------------------------------------------------
+# Logging
+# -----------------------------------------------------------------------------
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+CYAN='\033[0;36m'
+NC='\033[0m'
 
+log()     { echo -e "${GREEN}[bootstrap]${NC} $*"; }
+error()   { echo -e "${RED}[erro]${NC}     $*" >&2; }
+section() { echo -e "\n${CYAN}━━━ $* ━━━${NC}\n"; }
+
+# -----------------------------------------------------------------------------
+# Configuração das chaves
+# -----------------------------------------------------------------------------
 KEY_GITHUB="${HOME}/.ssh/github-dotfiles"
-KEY_GITLAB_MS="${HOME}/.ssh/gitlab-ms"
-KEY_GITLAB_GOOGLE="${HOME}/.ssh/gitlab-google"
+KEY_GITLAB="${HOME}/.ssh/gitlab"
 
-log "Garantindo pasta ~/.ssh e permissões"
-mkdir -p "${HOME}/.ssh"
-chmod 700 "${HOME}/.ssh"
+# -----------------------------------------------------------------------------
+# Função de geração
+# -----------------------------------------------------------------------------
+generate_key() {
+  local key_path="$1"
+  local comment="$2"
 
-log "Gerando chave SSH para GitHub (se não existir)"
-if [[ -f "${KEY_GITHUB}" ]]; then
-  log "Chave já existe: ${KEY_GITHUB}"
-else
-  ssh-keygen -t ed25519 -f "${KEY_GITHUB}" -C "dotfiles" -N ""
-  chmod 600 "${KEY_GITHUB}"
-  chmod 644 "${KEY_GITHUB}.pub"
-fi
+  if [[ -f "$key_path" ]]; then
+    log "Chave já existe: $key_path"
+  else
+    ssh-keygen -t ed25519 -f "$key_path" -C "$comment" -N ""
+    chmod 600 "$key_path"
+    chmod 644 "$key_path.pub"
+    log "Chave gerada: $key_path"
+  fi
+}
 
-log "Gerando chave SSH para GitLab MS (se não existir)"
-if [[ -f "${KEY_GITLAB_MS}" ]]; then
-  log "Chave já existe: ${KEY_GITLAB_MS}"
-else
-  ssh-keygen -t ed25519 -f "${KEY_GITLAB_MS}" -C "gitlab-ms" -N ""
-  chmod 600 "${KEY_GITLAB_MS}"
-  chmod 644 "${KEY_GITLAB_MS}.pub"
-fi
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
+main() {
+  section "Etapa 2 — Chaves SSH"
 
-log "Gerando chave SSH para GitLab Google (se não existir)"
-if [[ -f "${KEY_GITLAB_GOOGLE}" ]]; then
-  log "Chave já existe: ${KEY_GITLAB_GOOGLE}"
-else
-  ssh-keygen -t ed25519 -f "${KEY_GITLAB_GOOGLE}" -C "gitlab-google" -N ""
-  chmod 600 "${KEY_GITLAB_GOOGLE}"
-  chmod 644 "${KEY_GITLAB_GOOGLE}.pub"
-fi
+  log "Garantindo pasta ~/.ssh e permissões..."
+  mkdir -p "${HOME}/.ssh"
+  chmod 700 "${HOME}/.ssh"
 
-log "=== CHAVE PUBLICA — GitHub ==="
-cat "${KEY_GITHUB}.pub"
-log "Adicione no GitHub: Settings → SSH Keys → New SSH Key"
+  generate_key "$KEY_GITHUB" "github-dotfiles"
+  generate_key "$KEY_GITLAB" "gitlab"
 
-log "=== CHAVE PUBLICA — GitLab MS ==="
-cat "${KEY_GITLAB_MS}.pub"
-log "Adicione no GitLab (conta MS): Preferences → SSH Keys → Add new key"
+  section "Chaves públicas"
 
-log "=== CHAVE PUBLICA — GitLab Google ==="
-cat "${KEY_GITLAB_GOOGLE}.pub"
-log "Adicione no GitLab (conta Google): Preferences → SSH Keys → Add new key"
+  echo -e "${CYAN}GitHub${NC} — adicione em: Settings → SSH Keys → New SSH Key"
+  cat "${KEY_GITHUB}.pub"
 
-log "Depois de adicionar as chaves, execute o linkr para aplicar o ~/.ssh/config:"
-echo "  ./linkr core"
-echo ""
-log "E teste as conexões:"
-echo "  ssh -T git@github.com"
-echo "  ssh -T git@gitlab-ms"
-echo "  ssh -T git@gitlab-google"
+  echo ""
+  echo -e "${CYAN}GitLab${NC} — adicione em: Preferences → SSH Keys → Add new key"
+  cat "${KEY_GITLAB}.pub"
+
+  section "Próximos passos"
+
+  log "1. Adicione as chaves públicas acima nos respectivos serviços"
+  log "2. Aplique os dotfiles core para configurar o ~/.ssh/config:"
+  echo "     ./linkr core"
+  log "3. Teste as conexões:"
+  echo "     ssh -T git@github.com"
+  echo "     ssh -T git@gitlab.com"
+}
+
+main "$@"
