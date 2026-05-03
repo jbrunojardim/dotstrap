@@ -26,8 +26,10 @@ Suporte a **Fedora/RHEL** (`dnf`), **Arch Linux** (`pacman`) e **Debian/Ubuntu**
   - [Unlock LUKS2 via keyfile](#unlock-automático-do-luks2-via-keyfile)
   - [Limpar ambientes desktop](#limpar-ambientes-desktop-desnecessários)
   - [Forçar resolução TTY/GRUB](#forçar-resolução-do-ttygrub)
+  - [Zen Browser — Instalar](#zen-browser--instalar)
   - [VS Code — Instalar](#vs-code--instalar)
   - [VS Code — Atualizar](#vs-code--atualizar)
+  - [Fontes](#fontes)
   - [kubectl](#kubectl)
   - [Sudo sem senha](#sudo-sem-senha)
   - [Docker CE](#docker-ce)
@@ -40,9 +42,9 @@ Suporte a **Fedora/RHEL** (`dnf`), **Arch Linux** (`pacman`) e **Debian/Ubuntu**
 
 | Etapa | Script | Responsabilidade |
 |-------|--------|-----------------|
-| 1 | `bootstrap/init.sh` | Detecção do gestor de pacotes, update do sistema, instalação de pacotes essenciais e Zen Browser |
-| 2 | `bootstrap/ssh_keys.sh` | Geração de chaves SSH para GitHub e GitLab |
-| 3 | `bootstrap/desktop.sh` | Instalação do Hyprland e dependências do ambiente gráfico |
+| 1 | `bootstrap/init.sh` | Detecção do gestor de pacotes, update do sistema e instalação de pacotes essenciais |
+| 2 | `bootstrap/ssh_keys.sh` | Geração de chaves SSH e configuração do `~/.ssh/config` |
+| 3 | `bootstrap/hyprland.sh` | Instalação do Hyprland e dependências do ambiente gráfico |
 | 4 | `bootstrap/dotfiles.sh` | Clone dos dotfiles privados e execução do `linkr` |
 
 ---
@@ -57,7 +59,6 @@ O script detecta automaticamente o gestor de pacotes disponível (`dnf`, `pacman
 - Atualização completa do sistema
 - Instalação dos pacotes essenciais
 - Habilitação do serviço SSH
-- Instalação do Zen Browser em `~/.local` via release oficial do GitHub (distro-agnóstico)
 
 | Pacote | Uso |
 |--------|-----|
@@ -70,8 +71,7 @@ O script detecta automaticamente o gestor de pacotes disponível (`dnf`, `pacman
 | `iproute` / `iproute2` | Ferramentas de rede (`ip`, `ss`) |
 | `ncurses` | Suporte a interfaces de terminal |
 | `openssh` | Cliente e servidor SSH |
-
-> O Zen Browser é instalado em `~/.local/lib/zen-browser` sem uso de gestor de pacotes, garantindo compatibilidade com qualquer distro. A instalação é idempotente — se já existir, é ignorada.
+| `ffmpeg` | Codecs de mídia — necessário para reprodução de vídeo no Zen Browser |
 
 ---
 
@@ -85,9 +85,10 @@ O script:
 - Cria `~/.ssh/` com as permissões corretas
 - Gera uma chave `ed25519` em `~/.ssh/github` para o GitHub (se não existir)
 - Gera uma chave `ed25519` em `~/.ssh/gitlab` para o GitLab (se não existir)
+- Configura o `~/.ssh/config` com os blocos `Host github.com` e `Host gitlab.com` (idempotente — adiciona apenas o que estiver faltando)
 - Exibe as chaves públicas no terminal
 
-> A configuração do `~/.ssh/config` é aplicada pelo `linkr core` na etapa 4, via repositório privado de dotfiles.
+> O `~/.ssh/config` é configurado diretamente pelo script, sem depender do `linkr` ou do repositório privado de dotfiles.
 
 **Após executar**, adicione cada chave pública no serviço correspondente:
 
@@ -109,31 +110,29 @@ ssh -T git@gitlab.com
 > Execute em máquinas com monitor — **não executar em servidores headless**. Para servidores, pule para a Etapa 4 ou use `bootstrap/headless.sh`.
 
 ```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/desktop.sh | bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/hyprland.sh | bash
 ```
 
-O script:
+O script detecta o gestor de pacotes e:
 - Instala o Hyprland e todas as dependências do ambiente gráfico
-- Instala a JetBrainsMono Nerd Font em `~/.local/share/fonts`
-- Configura o **auto-start do Hyprland** via `~/.bash_profile` na tty1 (idempotente)
 - Instala `gnome-keyring` e `xdg-desktop-portal-hyprland` para autenticação OAuth e integração Wayland
+- Configura o **auto-start do Hyprland** via `~/.bash_profile` na tty1 (idempotente)
 
 | Pacote | Uso |
 |--------|-----|
 | `hyprland` | Compositor Wayland |
 | `hyprlock` | Tela de bloqueio |
 | `hypridle` | Daemon de bloqueio automático por inatividade |
-| `hyprshot` | Capturas de tela |
+| `hyprshot` | Capturas de tela (Fedora) |
 | `waybar` | Barra de status |
 | `kitty` | Emulador de terminal |
 | `wofi` | Launcher de aplicações |
 | `wlogout` | Menu de energia |
 | `swaync` | Daemon de notificações |
 | `gnome-keyring` | Armazenamento seguro de credenciais e tokens OAuth |
-| `xdg-desktop-portal-hyprland` | Portal Wayland para redirecionamento de browser e integração com apps |
-| `unzip` | Extração de arquivos zip |
+| `xdg-desktop-portal-hyprland` | Portal Wayland — redireciona browser para login OAuth e integra apps |
 
-> A JetBrainsMono Nerd Font é instalada via download direto do repositório oficial do [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts) (v3.2.1).
+> O `gnome-keyring` e o `xdg-desktop-portal-hyprland` são necessários para que o login OAuth do VS Code e do Zen Browser funcione corretamente no Hyprland.
 
 ---
 
@@ -402,6 +401,23 @@ O script:
 
 > Requer reboot para aplicar. Execute uma vez por monitor — não precisa rodar a cada boot.
 
+### Zen Browser — Instalar
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/zen-browser.sh | bash
+```
+
+Instala o Zen Browser em `~/.local` via release oficial do GitHub — sem gestor de pacotes, sem `sudo`, compatível com qualquer distro.
+
+O script:
+- Verifica se já está instalado (idempotente)
+- Obtém a URL do release mais recente via GitHub API
+- Extrai em `~/.local/lib/zen-browser`
+- Cria o wrapper `~/.local/bin/zen`
+- Cria a entrada `~/.local/share/applications/zen-browser.desktop`
+
+> Para reprodução de vídeo no YouTube e outros sites, o `ffmpeg` precisa estar instalado — provisionado automaticamente pela etapa 1.
+
 ### VS Code — Instalar
 
 ```bash
@@ -416,9 +432,9 @@ O script:
 - Extrai em `~/.local/lib/vscode`
 - Cria o wrapper `~/.local/bin/code`
 - Cria a entrada `~/.local/share/applications/vscode.desktop`
-- Cria `~/.config/code-flags.conf` com `--password-store=gnome-libsecret` para autenticação OAuth (GitHub, GitLab) funcionar corretamente no Hyprland
+- Cria `~/.config/code-flags.conf` com `--password-store=gnome-libsecret` para autenticação OAuth funcionar corretamente no Hyprland
 
-> Para que o login OAuth redirecione corretamente para o browser, o `gnome-keyring` e o `xdg-desktop-portal-hyprland` precisam estar instalados — ambos são provisionados automaticamente pela etapa 3.
+> Para que o login OAuth redirecione corretamente para o browser, o `gnome-keyring` e o `xdg-desktop-portal-hyprland` precisam estar instalados — provisionados automaticamente pela etapa 3.
 
 **Após instalar**, aplique os dotfiles: veja [4.4 — VS Code](#44--vs-code).
 
@@ -439,6 +455,22 @@ curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbruno
 ```
 
 Remove os binários existentes e baixa a versão mais recente. O wrapper, o `.desktop` e o `code-flags.conf` são preservados.
+
+### Fontes
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/fonts.sh | bash
+```
+
+Instala as fontes do sistema de acordo com a distro detectada.
+
+| Distro | Fontes instaladas | Método |
+|--------|------------------|--------|
+| Fedora/RHEL | JetBrainsMono Nerd Font | `curl` + `unzip` via Nerd Fonts GitHub |
+| Arch Linux | JetBrainsMono Nerd Font, Noto, Noto Emoji, Liberation | `pacman` |
+| Debian/Ubuntu | JetBrainsMono Nerd Font | `curl` + `unzip` via Nerd Fonts GitHub |
+
+> A JetBrainsMono Nerd Font é necessária para a correta exibição de ícones no Neovim, VS Code, VSCodium e no terminal Kitty.
 
 ### kubectl
 
@@ -490,19 +522,21 @@ O script:
 ```
 dotstrap/              # repositório público
 ├── bootstrap/
-│   ├── init.sh                 # Etapa 1: detecção de distro, update e pacotes essenciais + Zen Browser
-│   ├── ssh_keys.sh             # Etapa 2: gera chaves SSH para GitHub e GitLab
-│   ├── desktop.sh              # Etapa 3: instala Hyprland e ambiente gráfico
+│   ├── init.sh                 # Etapa 1: detecção de distro, update e pacotes essenciais
+│   ├── ssh_keys.sh             # Etapa 2: gera chaves SSH e configura ~/.ssh/config
+│   ├── hyprland.sh             # Etapa 3: instala Hyprland e ambiente gráfico
 │   ├── dotfiles.sh             # Etapa 4: clone dos dotfiles e execução do linkr
 │   └── headless.sh             # Opcional: configura sistema para uso headless/servidor
 └── tools/
     ├── LUKS.md                 # Guia: unlock automático do LUKS2 via keyfile no initramfs
     ├── luks_tpm.sh             # Referência: unlock via TPM2
+    ├── zen-browser.sh          # Opcional: instala Zen Browser via release oficial (distro-agnóstico)
+    ├── fonts.sh                # Opcional: instala fontes do sistema (JetBrainsMono + extras no Arch)
+    ├── vscode.sh               # Opcional: instala/atualiza VS Code via tarball oficial (distro-agnóstico)
     ├── cleanup_desktop.sh      # Opcional: remove i3, XFCE, LightDM e configura multi-user.target
     ├── docker.sh               # Opcional: instala Docker CE no Fedora 43
     ├── grub_resolution.sh      # Opcional: detecta monitor externo e força resolução no TTY/GRUB
     ├── kubectl.sh              # Opcional: instala kubectl (versão stable oficial)
-    ├── vscode.sh               # Opcional: instala/atualiza VS Code via tarball oficial (distro-agnóstico)
     └── sudo_nopasswd.sh        # Opcional: configura sudo sem senha para o usuário atual
 
 dotfile/                        # repositório privado
