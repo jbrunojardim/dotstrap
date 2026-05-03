@@ -83,7 +83,7 @@ curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbruno
 
 O script:
 - Cria `~/.ssh/` com as permissões corretas
-- Gera uma chave `ed25519` em `~/.ssh/github-dotfiles` para o GitHub (se não existir)
+- Gera uma chave `ed25519` em `~/.ssh/github` para o GitHub (se não existir)
 - Gera uma chave `ed25519` em `~/.ssh/gitlab` para o GitLab (se não existir)
 - Exibe as chaves públicas no terminal
 
