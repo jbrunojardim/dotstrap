@@ -154,54 +154,6 @@ enable_ssh() {
 }
 
 # -----------------------------------------------------------------------------
-# Zen Browser (distro-agnóstico — instalação em user space via GitHub Releases)
-# -----------------------------------------------------------------------------
-install_zen() {
-  if [[ -f "$HOME/.local/lib/zen-browser/zen-bin" ]]; then
-    log "Zen Browser já instalado, pulando..."
-    return
-  fi
-
-  log "Instalando Zen Browser..."
-
-  local zen_url
-  zen_url=$(curl -fsSL https://api.github.com/repos/zen-browser/desktop/releases/latest \
-    | grep -o '"browser_download_url": *"[^"]*zen\.linux-x86_64\.tar\.xz"' \
-    | grep -o 'https://[^"]*')
-
-  if [[ -z "$zen_url" ]]; then
-    error "Não foi possível obter a URL de download do Zen Browser."
-    error "Verifique sua conexão ou acesse: https://github.com/zen-browser/desktop/releases"
-    return 1
-  fi
-
-  mkdir -p "$HOME/.local/lib/zen-browser" \
-           "$HOME/.local/bin" \
-           "$HOME/.local/share/applications"
-
-  curl -fsSL "$zen_url" | tar -xJ -C "$HOME/.local/lib/zen-browser" --strip-components=1
-
-  cat > "$HOME/.local/bin/zen" << 'EOF'
-#!/usr/bin/env bash
-exec "$HOME/.local/lib/zen-browser/zen-bin" "$@"
-EOF
-  sed -i "s|\$HOME|$HOME|g" "$HOME/.local/bin/zen"
-  chmod +x "$HOME/.local/bin/zen"
-
-  cat > "$HOME/.local/share/applications/zen-browser.desktop" << EOF
-[Desktop Entry]
-Name=Zen Browser
-Exec=$HOME/.local/bin/zen %u
-Icon=$HOME/.local/lib/zen-browser/browser/chrome/icons/default/default128.png
-Type=Application
-Categories=Network;WebBrowser;
-MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
-EOF
-
-  log "Zen Browser instalado em ~/.local/lib/zen-browser"
-}
-
-# -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
 main() {
@@ -223,8 +175,6 @@ main() {
   update_system "$pkg_manager"
   install_packages "$pkg_manager"
   enable_ssh "$pkg_manager"
-  install_zen
-
   section "Etapa 1 concluída"
   log "Sistema pronto. Execute o próximo passo: ssh_keys.sh"
 }
