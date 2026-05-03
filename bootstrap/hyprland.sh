@@ -60,6 +60,8 @@ install_hyprland_dnf() {
     swaync \
     gnome-keyring \
     xdg-desktop-portal-hyprland \
+    grim \
+    slurp \
     unzip
 }
 
