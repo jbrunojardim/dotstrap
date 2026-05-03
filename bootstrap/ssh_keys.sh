@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # =============================================================================
 # ssh_keys.sh
-# Etapa 2 — Geração de chaves SSH para GitHub e GitLab
+# Etapa 2 — Geração de chaves SSH para GitHub e GitLab 
+#   e configuração do ~/.ssh/config
 # =============================================================================
 
 set -euo pipefail
@@ -23,9 +24,10 @@ section() { echo -e "\n${CYAN}━━━ $* ━━━${NC}\n"; }
 # -----------------------------------------------------------------------------
 KEY_GITHUB="${HOME}/.ssh/github-dotfiles"
 KEY_GITLAB="${HOME}/.ssh/gitlab"
+SSH_CONFIG="${HOME}/.ssh/config"
 
 # -----------------------------------------------------------------------------
-# Função de geração
+# Geração de chaves
 # -----------------------------------------------------------------------------
 generate_key() {
   local key_path="$1"
@@ -42,6 +44,48 @@ generate_key() {
 }
 
 # -----------------------------------------------------------------------------
+# Configuração do ~/.ssh/config
+# -----------------------------------------------------------------------------
+configure_ssh_config() {
+  log "Verificando ~/.ssh/config..."
+
+  touch "$SSH_CONFIG"
+  chmod 600 "$SSH_CONFIG"
+
+  # GitHub
+  if grep -q "^Host github.com" "$SSH_CONFIG" 2>/dev/null; then
+    log "Host github.com já existe em ~/.ssh/config, pulando..."
+  else
+    log "Adicionando Host github.com em ~/.ssh/config..."
+    cat >> "$SSH_CONFIG" << EOF
+
+Host github.com
+  HostName github.com
+  User git
+  IdentityFile ${KEY_GITHUB}
+  AddKeysToAgent yes
+EOF
+  fi
+
+  # GitLab
+  if grep -q "^Host gitlab.com" "$SSH_CONFIG" 2>/dev/null; then
+    log "Host gitlab.com já existe em ~/.ssh/config, pulando..."
+  else
+    log "Adicionando Host gitlab.com em ~/.ssh/config..."
+    cat >> "$SSH_CONFIG" << EOF
+
+Host gitlab.com
+  HostName gitlab.com
+  User git
+  IdentityFile ${KEY_GITLAB}
+  AddKeysToAgent yes
+EOF
+  fi
+
+  log "~/.ssh/config atualizado."
+}
+
+# -----------------------------------------------------------------------------
 # Main
 # -----------------------------------------------------------------------------
 main() {
@@ -53,6 +97,8 @@ main() {
 
   generate_key "$KEY_GITHUB" "github-dotfiles"
   generate_key "$KEY_GITLAB" "gitlab"
+
+  configure_ssh_config
 
   section "Chaves públicas"
 
@@ -66,11 +112,11 @@ main() {
   section "Próximos passos"
 
   log "1. Adicione as chaves públicas acima nos respectivos serviços"
-  log "2. Aplique os dotfiles core para configurar o ~/.ssh/config:"
-  echo "     ./linkr core"
-  log "3. Teste as conexões:"
+  log "2. Teste as conexões:"
   echo "     ssh -T git@github.com"
   echo "     ssh -T git@gitlab.com"
+  log "3. Execute o linkr para aplicar os dotfiles core:"
+  echo "     ./linkr core"
 }
 
 main "$@"
