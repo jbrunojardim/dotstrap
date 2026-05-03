@@ -341,25 +341,11 @@ O comando aplica:
 
 ### Unlock automático do LUKS2 via keyfile
 
-```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/luks_keyfile.sh | sudo bash
-```
+Consulte o guia completo: [tools/LUKS.md](tools/LUKS.md)
 
-Execute em máquinas com disco criptografado (LUKS2) para eliminar a necessidade de digitar a senha a cada boot.
+Elimina a necessidade de digitar a senha a cada boot em máquinas com disco criptografado (LUKS2). O processo envolve gerar um keyfile, adicioná-lo ao LUKS e configurar o dracut para incluí-lo no initramfs.
 
-O script:
-- Detecta a partição LUKS automaticamente via `lsblk`
-- Obtém o UUID da partição para nomear o keyfile
-- Solicita a senha LUKS interativamente — nunca em argumento ou arquivo
-- Valida a senha antes de prosseguir
-- Gera um keyfile aleatório (512 bytes) em `/etc/cryptsetup-keys.d/luks-UUID.key` com permissão `0400`
-- Configura o dracut para incluir o keyfile no initramfs
-- Adiciona o keyfile ao slot LUKS via `cryptsetup luksAddKey`
-- Regenera o initramfs com `dracut -fv`
-
-> **Idempotente:** se o keyfile já existir, o script encerra sem fazer alterações.
-
-> **IMPORTANTE:** a senha LUKS original continua válida como recovery. Guarde-a em local seguro — sem ela não há como recuperar o acesso caso o initramfs seja corrompido ou o keyfile removido.
+> **IMPORTANTE:** a senha LUKS original continua válida como recovery. Guarde-a em local seguro.
 
 ### Limpar ambientes desktop desnecessários
 
@@ -493,7 +479,7 @@ dotstrap/              # repositório público
 │   ├── dotfiles.sh             # Etapa 4: clone dos dotfiles e execução do linkr
 │   └── headless.sh             # Opcional: configura sistema para uso headless/servidor
 └── tools/
-    ├── luks_keyfile.sh         # Opcional: unlock automático do LUKS2 via keyfile no initramfs
+    ├── LUKS.md                 # Guia: unlock automático do LUKS2 via keyfile no initramfs
     ├── luks_tpm.sh             # Referência: unlock via TPM2
     ├── cleanup_desktop.sh      # Opcional: remove i3, XFCE, LightDM e configura multi-user.target
     ├── docker.sh               # Opcional: instala Docker CE no Fedora 43
