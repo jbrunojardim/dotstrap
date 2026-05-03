@@ -2,12 +2,14 @@
 
 Automação de configuração inicial de ambientes Linux em etapas independentes, cada uma com responsabilidade única.
 
+Suporte a **Fedora/RHEL** (`dnf`), **Arch Linux** (`pacman`) e **Debian/Ubuntu** (`apt`) — o gestor de pacotes é detectado automaticamente.
+
 ---
 
 ## Índice
 
 - [Fluxo principal](#fluxo-principal)
-- [Etapa 1 — Preparar o sistema](#etapa-1--preparar-o-sistema)
+- [Etapa 1 — Inicializar o sistema](#etapa-1--inicializar-o-sistema)
 - [Etapa 2 — Gerar chaves SSH](#etapa-2--gerar-chaves-ssh)
 - [Etapa 3 — Instalar o ambiente desktop](#etapa-3--instalar-o-ambiente-desktop)
 - [Etapa 4 — Aplicar dotfiles](#etapa-4--aplicar-dotfiles)
@@ -24,7 +26,8 @@ Automação de configuração inicial de ambientes Linux em etapas independentes
   - [Unlock LUKS2 via keyfile](#unlock-automático-do-luks2-via-keyfile)
   - [Limpar ambientes desktop](#limpar-ambientes-desktop-desnecessários)
   - [Forçar resolução TTY/GRUB](#forçar-resolução-do-ttygrub)
-  - [VS Code](#vs-code)
+  - [VS Code — Instalar](#vs-code--instalar)
+  - [VS Code — Atualizar](#vs-code--atualizar)
   - [kubectl](#kubectl)
   - [Sudo sem senha](#sudo-sem-senha)
   - [Docker CE](#docker-ce)
@@ -37,22 +40,24 @@ Automação de configuração inicial de ambientes Linux em etapas independentes
 
 | Etapa | Script | Responsabilidade |
 |-------|--------|-----------------|
-| 1 | `bootstrap/system.sh` | Update do sistema e instalação de pacotes essenciais |
+| 1 | `bootstrap/init.sh` | Detecção do gestor de pacotes, update do sistema, instalação de pacotes essenciais e Zen Browser |
 | 2 | `bootstrap/ssh_keys.sh` | Geração de chaves SSH para GitHub e GitLab |
 | 3 | `bootstrap/desktop.sh` | Instalação do Hyprland e dependências do ambiente gráfico |
 | 4 | `bootstrap/dotfiles.sh` | Clone dos dotfiles privados e execução do `linkr` |
 
 ---
 
-## Etapa 1 — Preparar o sistema
+## Etapa 1 — Inicializar o sistema
 
 ```bash
-curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/system.sh | bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/init.sh | bash
 ```
 
-O script:
-- Atualiza o sistema via `dnf update`
-- Instala os pacotes essenciais
+O script detecta automaticamente o gestor de pacotes disponível (`dnf`, `pacman` ou `apt`) e executa:
+- Atualização completa do sistema
+- Instalação dos pacotes essenciais
+- Habilitação do serviço SSH
+- Instalação do Zen Browser em `~/.local` via release oficial do GitHub (distro-agnóstico)
 
 | Pacote | Uso |
 |--------|-----|
@@ -62,10 +67,11 @@ O script:
 | `curl` | Transferência de dados via URL |
 | `git` | Controle de versão |
 | `awk` | Processamento de texto |
-| `iproute` | Ferramentas de rede (`ip`, `ss`) |
+| `iproute` / `iproute2` | Ferramentas de rede (`ip`, `ss`) |
 | `ncurses` | Suporte a interfaces de terminal |
-| `openssh` | Cliente SSH |
-| `openssh-server` | Servidor SSH |
+| `openssh` | Cliente e servidor SSH |
+
+> O Zen Browser é instalado em `~/.local/lib/zen-browser` sem uso de gestor de pacotes, garantindo compatibilidade com qualquer distro. A instalação é idempotente — se já existir, é ignorada.
 
 ---
 
@@ -110,10 +116,10 @@ curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbruno
 ```
 
 O script:
-- Habilita o COPR `solopasha/hyprland`
 - Instala o Hyprland e todas as dependências do ambiente gráfico
 - Instala a JetBrainsMono Nerd Font em `~/.local/share/fonts`
 - Configura o **auto-start do Hyprland** via `~/.bash_profile` na tty1 (idempotente)
+- Instala `gnome-keyring` e `xdg-desktop-portal-hyprland` para autenticação OAuth e integração Wayland
 
 | Pacote | Uso |
 |--------|-----|
@@ -126,8 +132,9 @@ O script:
 | `wofi` | Launcher de aplicações |
 | `wlogout` | Menu de energia |
 | `swaync` | Daemon de notificações |
+| `gnome-keyring` | Armazenamento seguro de credenciais e tokens OAuth |
+| `xdg-desktop-portal-hyprland` | Portal Wayland para redirecionamento de browser e integração com apps |
 | `unzip` | Extração de arquivos zip |
-| Zen Browser | Browser focado em privacidade — binário instalado em `~/.local/bin/zen` via release oficial do GitHub |
 
 > A JetBrainsMono Nerd Font é instalada via download direto do repositório oficial do [Nerd Fonts](https://github.com/ryanoasis/nerd-fonts) (v3.2.1).
 
@@ -180,7 +187,7 @@ Se o VS Code estiver instalado, o script:
 - Instala as extensões via `scripts/vscode.sh`
 - Aplica os dotfiles via `linkr vscode`, criando o symlink de `settings.json` e `tasks.json`
 
-> Se o VS Code não for detectado, o script exibe um aviso e encerra sem aplicar nada. Para instalar o VS Code, veja [VS Code](#vs-code).
+> Se o VS Code não for detectado, o script exibe um aviso e encerra sem aplicar nada. Para instalar o VS Code, veja [VS Code — Instalar](#vs-code--instalar).
 
 ---
 
@@ -220,7 +227,7 @@ dotfile/vim/.vim/vimrc                      →  ~/.vim/vimrc
 
 Se um symlink já existir e apontar para o caminho correto, ele é ignorado. Se existir um arquivo ou link diferente no destino, ele é removido antes de criar o novo.
 
-> O comando `issue` é desacoplado de todos os grupos — inclusive do `all` — e deve ser executado explicitamente. Ele escreve em `/etc/issue.d/garden.issue` (sobrevive a `dnf upgrade`) e requer `sudo`.
+> O comando `issue` é desacoplado de todos os grupos — inclusive do `all` — e deve ser executado explicitamente. Ele escreve em `/etc/issue.d/garden.issue` e requer `sudo`.
 
 ---
 
@@ -330,7 +337,7 @@ Após aplicar os dotfiles (etapa 4), execute:
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/bootstrap/dotfiles.sh | bash -s issue
 ```
 
-Configura o `/etc/issue.d/garden.issue` com um banner ASCII art exibido na tela de login do TTY, com cores Catppuccin Mocha. O arquivo fica em `/etc/issue.d/` para sobreviver a atualizações do sistema via `dnf upgrade`.
+Configura o `/etc/issue.d/garden.issue` com um banner ASCII art exibido na tela de login do TTY, com cores Catppuccin Mocha. O arquivo fica em `/etc/issue.d/` para sobreviver a atualizações do sistema.
 
 > O banner aparece **apenas na tela de login do TTY** — não interfere com terminais abertos após o login.
 
@@ -398,20 +405,25 @@ O script:
 
 > Requer reboot para aplicar. Execute uma vez por monitor — não precisa rodar a cada boot.
 
-### VS Code
+### VS Code — Instalar
 
-**1. Instalar:**
 ```bash
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/vscode.sh | bash
 ```
 
-O script:
-- Verifica se o `code` já está instalado (idempotente)
-- Importa a chave GPG da Microsoft
-- Adiciona o repositório oficial em `/etc/yum.repos.d/vscode.repo`
-- Instala via `dnf install code`
+Instala o VS Code em `~/.local` via tarball oficial da Microsoft — sem gestor de pacotes, sem `sudo`, compatível com qualquer distro.
 
-**2. Aplicar dotfiles:** veja [4.4 — VS Code](#44--vs-code).
+O script:
+- Verifica se já está instalado (idempotente)
+- Baixa o tarball mais recente de `update.code.visualstudio.com/latest/linux-x64/stable`
+- Extrai em `~/.local/lib/vscode`
+- Cria o wrapper `~/.local/bin/code`
+- Cria a entrada `~/.local/share/applications/vscode.desktop`
+- Cria `~/.config/code-flags.conf` com `--password-store=gnome-libsecret` para autenticação OAuth (GitHub, GitLab) funcionar corretamente no Hyprland
+
+> Para que o login OAuth redirecione corretamente para o browser, o `gnome-keyring` e o `xdg-desktop-portal-hyprland` precisam estar instalados — ambos são provisionados automaticamente pela etapa 3.
+
+**Após instalar**, aplique os dotfiles: veja [4.4 — VS Code](#44--vs-code).
 
 **Extensões instaladas:**
 
@@ -422,6 +434,14 @@ O script:
 | `alexdauenhauer.catppuccin-noctis-icons` | Tema de ícones |
 | `catppuccin.catppuccin-vsc-icons` | Ícones alternativos Catppuccin |
 | `anthropic.claude-code` | Claude Code integrado ao editor |
+
+### VS Code — Atualizar
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/vscode.sh | bash -s -- --update
+```
+
+Remove os binários existentes e baixa a versão mais recente. O wrapper, o `.desktop` e o `code-flags.conf` são preservados.
 
 ### kubectl
 
@@ -473,7 +493,7 @@ O script:
 ```
 dotstrap/              # repositório público
 ├── bootstrap/
-│   ├── system.sh               # Etapa 1: update do sistema e instalação de pacotes
+│   ├── init.sh                 # Etapa 1: detecção de distro, update e pacotes essenciais + Zen Browser
 │   ├── ssh_keys.sh             # Etapa 2: gera chaves SSH para GitHub e GitLab
 │   ├── desktop.sh              # Etapa 3: instala Hyprland e ambiente gráfico
 │   ├── dotfiles.sh             # Etapa 4: clone dos dotfiles e execução do linkr
@@ -485,7 +505,7 @@ dotstrap/              # repositório público
     ├── docker.sh               # Opcional: instala Docker CE no Fedora 43
     ├── grub_resolution.sh      # Opcional: detecta monitor externo e força resolução no TTY/GRUB
     ├── kubectl.sh              # Opcional: instala kubectl (versão stable oficial)
-    ├── vscode.sh               # Opcional: instala VS Code no Fedora (repositório oficial Microsoft)
+    ├── vscode.sh               # Opcional: instala/atualiza VS Code via tarball oficial (distro-agnóstico)
     └── sudo_nopasswd.sh        # Opcional: configura sudo sem senha para o usuário atual
 
 dotfile/                        # repositório privado
@@ -557,7 +577,7 @@ dotfile/                        # repositório privado
 
 ## Requisitos
 
-- Sistema baseado em **RHEL/Fedora** (usa `dnf`)
+- Sistema baseado em **Fedora/RHEL** (`dnf`), **Arch Linux** (`pacman`) ou **Debian/Ubuntu** (`apt`)
 - Acesso `sudo`
 - `curl` e `bash` disponíveis no sistema base
 
