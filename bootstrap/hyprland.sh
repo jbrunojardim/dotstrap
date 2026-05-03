@@ -60,14 +60,14 @@ install_hyprland_dnf() {
     swaync \
     gnome-keyring \
     xdg-desktop-portal-hyprland \
-    grim \
-    slurp \
     unzip
 }
 
 install_hyprland_pacman() {
   log "Instalando Hyprland e dependências (Arch)..."
   sudo pacman -S --needed --noconfirm \
+    grim \
+    slurp \
     hyprland \
     hyprlock \
     hypridle \
