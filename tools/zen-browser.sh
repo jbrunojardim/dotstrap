@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# zenbrowser.sh
+# zen-browser.sh
 # Instalação do Zen Browser via release oficial do GitHub
 # Distro-agnóstico — instalação em user space (~/.local)
 # =============================================================================
