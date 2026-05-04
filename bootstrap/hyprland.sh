@@ -89,19 +89,20 @@ install_hyprland_pacman() {
 configure_autostart() {
   log "Configurando auto-start do Hyprland na tty1..."
 
-  if grep -q "exec Hyprland" "$HOME/.bash_profile" 2>/dev/null; then
+  if grep -q "exec start-hyprland" "$HOME/.bash_profile" 2>/dev/null; then
     log "Auto-start já presente no ~/.bash_profile, pulando..."
   else
     cat >> "$HOME/.bash_profile" << 'EOF'
 
 # Auto-start Hyprland na tty1
 if [ -z "$DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
-    exec Hyprland
+    exec start-hyprland
 fi
 EOF
     log "Auto-start adicionado ao ~/.bash_profile"
   fi
 }
+
 
 # -----------------------------------------------------------------------------
 # Main
