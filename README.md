@@ -28,7 +28,8 @@ Suporte a **Fedora/RHEL** (`dnf`), **Arch Linux** (`pacman`) e **Debian/Ubuntu**
   - [Forçar resolução TTY/GRUB](#forçar-resolução-do-ttygrub)
   - [Zen Browser — Instalar](#zen-browser--instalar)
   - [VS Code — Instalar](#vs-code--instalar)
-  - [VS Code — Atualizar](#vs-code--atualizar)
+  - [VS Code — Atualizar (Fedora/apt)](#vs-code--atualizar-fedoraapt)
+  - [VS Code — Atualizar (Arch)](#vs-code--atualizar-arch)
   - [Fontes](#fontes)
   - [kubectl](#kubectl)
   - [Sudo sem senha](#sudo-sem-senha)
@@ -448,13 +449,25 @@ O script:
 | `catppuccin.catppuccin-vsc-icons` | Ícones alternativos Catppuccin |
 | `anthropic.claude-code` | Claude Code integrado ao editor |
 
-### VS Code — Atualizar
+### VS Code — Atualizar (Fedora/apt)
 
 ```bash
 curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/vscode.sh | bash -s -- --update
 ```
 
-Remove os binários existentes e baixa a versão mais recente. O wrapper, o `.desktop` e o `code-flags.conf` são preservados.
+Remove os binários existentes e baixa a versão mais recente via tarball. O wrapper, o `.desktop` e o `code-flags.conf` são preservados.
+
+> Exclusivo para Fedora/apt — no Arch o VS Code é gerenciado via `makepkg`, não via tarball.
+
+### VS Code — Atualizar (Arch)
+
+```bash
+curl -fsSL -H 'Cache-Control: no-cache' https://raw.githubusercontent.com/jbrunojardim/dotstrap/refs/heads/joseph/tools/vscode-update.sh | bash
+```
+
+Atualiza o `visual-studio-code-bin` via `makepkg` — clona o PKGBUILD mais recente do AUR, builda e instala. O diretório temporário é removido automaticamente ao final.
+
+> O `pacman -Syu` **não atualiza pacotes AUR** — este script é necessário para manter o VS Code atualizado no Arch.
 
 ### Fontes
 
@@ -532,7 +545,8 @@ dotstrap/              # repositório público
     ├── luks_tpm.sh             # Referência: unlock via TPM2
     ├── zen-browser.sh          # Opcional: instala Zen Browser via release oficial (distro-agnóstico)
     ├── fonts.sh                # Opcional: instala fontes do sistema (JetBrainsMono + extras no Arch)
-    ├── vscode.sh               # Opcional: instala/atualiza VS Code via tarball oficial (distro-agnóstico)
+    ├── vscode.sh               # Opcional: instala VS Code (makepkg no Arch, tarball no Fedora/apt)
+    ├── vscode-update.sh        # Opcional: atualiza VS Code no Arch via makepkg (AUR)
     ├── cleanup_desktop.sh      # Opcional: remove i3, XFCE, LightDM e configura multi-user.target
     ├── docker.sh               # Opcional: instala Docker CE no Fedora 43
     ├── grub_resolution.sh      # Opcional: detecta monitor externo e força resolução no TTY/GRUB
